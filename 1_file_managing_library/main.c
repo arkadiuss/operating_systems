@@ -27,7 +27,7 @@ void search_directory(char **args, int i) {
     char* dir = args[i + 1];
     char* file_name = args[i + 2];
     char* tmp_file_name = args[i + 3];
-    s_file file = get_current_location();
+    s_file file = functions.get_current_location();
     functions.set_location(&file, dir);
     functions.set_file_name(&file, file_name);
     functions.find_file(&file, tmp_file_name);
