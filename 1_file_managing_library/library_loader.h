@@ -19,8 +19,10 @@ typedef struct fm_functions {
     int (*find_and_insert_named)(char**, int, s_file*, const char*);
     void (*remove_file)(char**, int);
     void (*clear_table)(char**, int);
+
+    void* handle;
 } fm_functions;
 
-void load_library(fm_functions *functions);
-
+int load_library(fm_functions *functions);
+int unload_library(fm_functions *functions);
 #endif //INC_1_FILE_MANAGING_LIBRARY_LIBRARY_LOADER_H

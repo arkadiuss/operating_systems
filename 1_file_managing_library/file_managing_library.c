@@ -94,8 +94,10 @@ void remove_file(char **file_table, int index) {
 }
 
 void clear_table(char **file_table, int file_tab_size) {
-    for(int i = 0; i < file_tab_size; i++){
-        remove_file(file_table, i);
+    if(file_table != NULL) {
+        for (int i = 0; i < file_tab_size; i++) {
+            remove_file(file_table, i);
+        }
+        free(file_table);
     }
-    free(file_table);
 }

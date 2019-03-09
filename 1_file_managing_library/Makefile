@@ -28,7 +28,7 @@ file_managing_library.so: file_managing_library.h
 library_loader.o: library_loader.h
 	$(CC) -o library_loader.o -c library_loader_static.c
 
-library_loader_dynamic.o: library_loader.h
+library_loader_dynamic.o: library_loader.h library_loader_dynamic.c
 	$(CC) -o library_loader_dynamic.o -c library_loader_dynamic.c
 
 file_managing_library.o: file_managing_library.h

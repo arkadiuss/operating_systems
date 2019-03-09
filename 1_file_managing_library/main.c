@@ -86,5 +86,6 @@ int main(int argc, char** argv) {
     }
     //print_files(file_table, TAB_SIZE);
     functions.clear_table(file_table, TAB_SIZE);
+    unload_library(&functions);
     return 0;
 }
