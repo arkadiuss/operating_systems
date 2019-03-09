@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include "file_managing_library.h"
 
 char** file_table = NULL;
@@ -40,8 +42,22 @@ void remove_block(char **args, int i) {
     remove_file(file_table, index_int);
 }
 
+double timeval_diff(struct timeval t1, struct timeval t2) {
+    return ((double) t2.tv_sec - t1.tv_sec) * 1000.0f + ((double) t2.tv_usec - t1.tv_usec) / 1000.0f;
+}
+
 void exec_with_time(void (*op)(char**, int), char **args, int i) {
+    struct timeval start, end;
+    struct rusage d_start, d_end;
+    getrusage(RUSAGE_SELF, &d_start);
+    gettimeofday(&start, NULL);
     op(args, i);
+    getrusage(RUSAGE_SELF, &d_end);
+    gettimeofday(&end, NULL);
+    double real_ms = timeval_diff(start, end);
+    double user_ms = timeval_diff(d_start.ru_utime, d_end.ru_utime);
+    double system_ms = timeval_diff(d_start.ru_stime, d_end.ru_stime);
+    printf("Operation time:\n user: %fms\n system: %fms\n real: %fms\n", user_ms, system_ms, real_ms);
 }
 
 int main(int argc, char** argv) {
@@ -63,7 +79,7 @@ int main(int argc, char** argv) {
             return 1;
         }
     }
-    print_files(file_table, TAB_SIZE);
+    //print_files(file_table, TAB_SIZE);
     clear_table(file_table, TAB_SIZE);
     return 0;
 }
