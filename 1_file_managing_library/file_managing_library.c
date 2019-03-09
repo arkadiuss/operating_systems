@@ -59,7 +59,7 @@ char* read_file_content(FILE *file, long file_size) {
 }
 
 char* read_file(const char* file_name) {
-    FILE *file;;
+    FILE *file;
     if((file = fopen(file_name, "r")) == NULL){
         return NULL;
     }
@@ -69,22 +69,32 @@ char* read_file(const char* file_name) {
     return file_content;
 }
 
-int open_file_with_tmp_name(char **file_table, int file_tab_size, s_file *file, const char *tmp_file_name) {
-    find_file(file, tmp_file_name);
+int insert_content_to_table(char **file_table, int file_tab_size, const char *tmp_file_name) {
     int index;
     if((index = get_free_index(file_table, file_tab_size)) != 0){
         return -1;
     }
     file_table[index] = read_file(tmp_file_name);
-    return 0;
+    return index;
 }
 
-int open_file(char **file_table, int file_tab_size, s_file *file) {
-    return open_file_with_tmp_name(file_table, file_tab_size, file, "tmp_file");
+int find_and_insert_named(char **file_table, int file_tab_size, s_file *file, const char *tmp_file_name) {
+    find_file(file, tmp_file_name);
+    return insert_content_to_table(file_table, file_tab_size, tmp_file_name);
 }
 
+int find_and_insert(char **file_table, int file_tab_size, s_file *file) {
+    return find_and_insert_named(file_table, file_tab_size, file, "tmp_file");
+}
 
+void remove_file(char **file_table, int index) {
+    free(file_table[index]);
+    file_table[index] = NULL;
+}
 
-
-
-
+void clear_table(char **file_table, int file_tab_size) {
+    for(int i = 0; i < file_tab_size; i++){
+        remove_file(file_table, i);
+    }
+    free(file_table);
+}

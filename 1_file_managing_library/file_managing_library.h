@@ -15,7 +15,11 @@ int set_location(s_file * file, const char* location);
 int set_file_name(s_file * file, const char* location);
 
 char** create_file_table(int size);
-int open_file(char** file_table, int file_tab_size, s_file* file);
-int open_file_with_tmp_name(char** file_table, int file_tab_size, s_file* file, const char* tmp_file_name);
+int find_file(s_file *file, const char *tmp_file_name);
+int insert_content_to_table(char **file_table, int file_tab_size, const char *tmp_file_name);
+int find_and_insert(char** file_table, int file_tab_size, s_file* file);
+int find_and_insert_named(char** file_table, int file_tab_size, s_file* file, const char* tmp_file_name);
+void remove_file(char** file_table, int index);
+void clear_table(char** file_table, int file_tab_size);
 
 #endif //INC_1_FILE_MANAGING_LIBRARY_FILE_MANAGING_LIBRARY_H
