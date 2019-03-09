@@ -1,0 +1,18 @@
+//
+// Created by arkadius on 09.03.19.
+//
+#include "file_managing_library.h"
+#include "library_loader.h"
+
+void load_library(fm_functions *functions) {
+    functions->get_current_location = get_current_location;
+    functions->set_file_name = set_file_name;
+    functions->set_location = set_location;
+    functions->create_file_table = create_file_table;
+    functions->find_file = find_file;
+    functions->insert_content_to_table = insert_content_to_table;
+    functions->remove_file = remove_file;
+    functions->find_and_insert = find_and_insert;
+    functions->find_and_insert_named = find_and_insert_named;
+    functions->clear_table = clear_table;
+}

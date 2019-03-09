@@ -5,5 +5,22 @@
 #ifndef INC_1_FILE_MANAGING_LIBRARY_LIBRARY_LOADER_H
 #define INC_1_FILE_MANAGING_LIBRARY_LIBRARY_LOADER_H
 
-void load_library();
+#include "file_managing_library.h"
+
+typedef struct fm_functions {
+    s_file (*get_current_location)();
+    int (*set_location)(s_file*, const char*);
+    int (*set_file_name)(s_file*, const char*);
+
+    char** (*create_file_table)(int);
+    int (*find_file)(s_file *file, const char*);
+    int (*insert_content_to_table)(char **, int, const char *);
+    int (*find_and_insert)(char**, int, s_file*);
+    int (*find_and_insert_named)(char**, int, s_file*, const char*);
+    void (*remove_file)(char**, int);
+    void (*clear_table)(char**, int);
+} fm_functions;
+
+void load_library(fm_functions *functions);
+
 #endif //INC_1_FILE_MANAGING_LIBRARY_LIBRARY_LOADER_H

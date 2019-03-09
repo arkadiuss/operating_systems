@@ -3,10 +3,11 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include "file_managing_library.h"
+#include "library_loader.h"
 
 char** file_table = NULL;
 int TAB_SIZE = 10;
+fm_functions functions;
 
 void print_files(char** files, int n){
     for(int i = 0; i < 1; i++) {
@@ -19,7 +20,7 @@ void create_table(char **args, int i) {
     char *size = args[i + 1];
     //TODO: validation is int
     TAB_SIZE = atoi(size);
-    file_table = create_file_table(TAB_SIZE);
+    file_table = functions.create_file_table(TAB_SIZE);
 }
 
 void search_directory(char **args, int i) {
@@ -27,20 +28,20 @@ void search_directory(char **args, int i) {
     char* file_name = args[i + 2];
     char* tmp_file_name = args[i + 3];
     s_file file = get_current_location();
-    set_location(&file, dir);
-    set_file_name(&file, file_name);
-    find_file(&file, tmp_file_name);
+    functions.set_location(&file, dir);
+    functions.set_file_name(&file, file_name);
+    functions.find_file(&file, tmp_file_name);
 }
 
 void insert_to_table(char **args, int i) {
     char* tmp_file_name = args[i + 3];
-    insert_content_to_table(file_table, TAB_SIZE, tmp_file_name);
+    functions.insert_content_to_table(file_table, TAB_SIZE, tmp_file_name);
 }
 
 void remove_block(char **args, int i) {
     char *index = args[i + 1];
     int index_int = atoi(index);
-    remove_file(file_table, index_int);
+    functions.remove_file(file_table, index_int);
 }
 
 double timeval_diff(struct timeval t1, struct timeval t2) {
@@ -63,6 +64,7 @@ void exec_with_time(void (*op)(char**, int), char **args, int i) {
 }
 
 int main(int argc, char** argv) {
+    load_library(&functions);
     int i = 1;
     while(i < argc) {
         //TODO: validation of number of argument
@@ -83,6 +85,6 @@ int main(int argc, char** argv) {
         }
     }
     //print_files(file_table, TAB_SIZE);
-    clear_table(file_table, TAB_SIZE);
+    functions.clear_table(file_table, TAB_SIZE);
     return 0;
 }

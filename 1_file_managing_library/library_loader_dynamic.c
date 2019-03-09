@@ -5,7 +5,9 @@
 #include <dlfcn.h>
 #include "library_loader.h"
 
-void load_library() {
+
+void load_library(fm_functions *functions) {
     //void *handle = dlopen("", RTLD_LAZY);
+
 }
 
