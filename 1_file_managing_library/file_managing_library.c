@@ -26,7 +26,7 @@ int set_file_name(s_file *file, const char *file_name) {
 char **create_file_table(int size) {
     return (char**) calloc(size, sizeof(char*));
 }
-
+//TODO: validation
 int find_file(s_file *file, const char *tmp_file_name) {
     char command[512];
     sprintf(command, "find %s -name \"*%s*\" > %s", file->location, file->file_name, tmp_file_name);
@@ -57,7 +57,7 @@ char* read_file_content(FILE *file, long file_size) {
     file_content[n] = '\0';
     return file_content;
 }
-
+//TODO: too big files
 char* read_file(const char* file_name) {
     FILE *file;
     if((file = fopen(file_name, "r")) == NULL){
@@ -83,6 +83,7 @@ int find_and_insert_named(char **file_table, int file_tab_size, s_file *file, co
     return insert_content_to_table(file_table, file_tab_size, tmp_file_name);
 }
 
+//TODO: dynamic file name
 int find_and_insert(char **file_table, int file_tab_size, s_file *file) {
     return find_and_insert_named(file_table, file_tab_size, file, "tmp_file");
 }

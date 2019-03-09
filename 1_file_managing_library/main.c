@@ -17,6 +17,7 @@ void print_files(char** files, int n){
 
 void create_table(char **args, int i) {
     char *size = args[i + 1];
+    //TODO: validation is int
     TAB_SIZE = atoi(size);
     file_table = create_file_table(TAB_SIZE);
 }
@@ -51,6 +52,7 @@ void exec_with_time(void (*op)(char**, int), char **args, int i) {
     struct rusage d_start, d_end;
     getrusage(RUSAGE_SELF, &d_start);
     gettimeofday(&start, NULL);
+    //TODO: handle return codes
     op(args, i);
     getrusage(RUSAGE_SELF, &d_end);
     gettimeofday(&end, NULL);
@@ -63,6 +65,7 @@ void exec_with_time(void (*op)(char**, int), char **args, int i) {
 int main(int argc, char** argv) {
     int i = 1;
     while(i < argc) {
+        //TODO: validation of number of argument
         char* command = argv[i];
         if(strcmp(command, "create_table") == 0){
             exec_with_time(create_table, argv, i);
