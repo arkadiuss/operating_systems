@@ -1,5 +1,7 @@
 CC = gcc
 CFLAGS = -Wall
+OFLAG ?= -O0
+export OFLAG
 export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
 
 test:
@@ -11,14 +13,31 @@ test:
 	search_directory /home file file_res \
 	remove_block 2
 
+define make-Otest
+	$(eval export OFLAG=-O$(1))
+	@make --no-print-directory OFLAG=$(OFLAG) $(2)
+	@make --no-print-directory test
+endef
+
+OFLAGS = 1 2 3
+
+Otest-static:
+	$(foreach i, $(OFLAGS), $(call make-Otest,$(i),static))
+
+Otest-shared:
+	$(foreach i, $(OFLAGS), $(call make-Otest,$(i),shared))
+
+Otest-dynamic:
+	$(foreach i, $(OFLAGS), $(call make-Otest,$(i),dynamic))
+
 static: library_loader_static.o file_managing_library.o
-	$(CC) -o fm library_loader_static.o file_managing_library.o main.c
+	$(CC) $(CFLAGS) $(OFLAG) -o fm library_loader_static.o file_managing_library.o main.c
 
 shared: file_managing_library.so library_loader.so
-	$(CC) -o fm main.c library_loader.so file_managing_library.so
+	$(CC) $(CFLAGS) $(OFLAG) -o fm main.c library_loader.so file_managing_library.so
 
 dynamic: library_loader_dynamic.o file_managing_library.so
-	$(CC) -o fm main.c library_loader_dynamic.o -ldl
+	$(CC)) $(CFLAGS) $(OFLAG) -o fm main.c library_loader_dynamic.o -ldl
 
 library_loader_static.o: library_loader.h library_loader_static.c
 	$(CC) -o library_loader_static.o -c library_loader_static.c
