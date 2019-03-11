@@ -4,17 +4,20 @@ OFLAG ?= -O0
 export OFLAG
 export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
 
+default: static test
+
 test:
-	./fm create_table 10 \
+	./fm create_table 3 \
 	search_directory /usr .c c_res \
 	search_directory /usr .cpp cpp_res \
 	search_directory /usr main main_res \
 	remove_block 1 \
-	search_directory /home file file_res \
+	search_directory /tmp file file_res \
 	remove_block 2
 
 define make-Otest
 	$(eval export OFLAG=-O$(1))
+	@echo TESTING O$(1) flag
 	@make --no-print-directory clean
 	@make --no-print-directory OFLAG=$(OFLAG) $(2)
 	@make --no-print-directory test
