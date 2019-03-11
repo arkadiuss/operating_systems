@@ -23,7 +23,7 @@ define make-Otest
 	@make --no-print-directory test
 endef
 
-OFLAGS = 1 2 3
+OFLAGS = 1 2 3 s
 
 Otest-static:
 	$(foreach i, $(OFLAGS), $(call make-Otest,$(i),static))
@@ -41,7 +41,7 @@ shared: file_managing_library.so library_loader.so main.c
 	$(CC) $(CFLAGS) $(OFLAG) -o fm main.c library_loader.so file_managing_library.so
 
 dynamic: library_loader_dynamic.o file_managing_library.so main.c
-	$(CC)) $(CFLAGS) $(OFLAG) -o fm main.c library_loader_dynamic.o -ldl
+	$(CC) $(CFLAGS) $(OFLAG) -o fm main.c library_loader_dynamic.o -ldl
 
 library_loader_static.o: library_loader.h library_loader_static.c
 	$(CC) $(CFLAGS) $(OFLAG) -o library_loader_static.o -c library_loader_static.c
@@ -56,7 +56,7 @@ file_managing_library.o: file_managing_library.h file_managing_library.c
 	$(CC) $(CFLAGS) $(OFLAG) -c file_managing_library.c
 
 file_managing_library.so: file_managing_library.h file_managing_library.c
-	$(CC) $(CFLAGS) $(OFLAG)-shared -fPIC -o file_managing_library.so file_managing_library.c
+	$(CC) $(CFLAGS) $(OFLAG) -shared -fPIC -o file_managing_library.so file_managing_library.c
 
 clean:
 	rm -f *.o *.so fm
