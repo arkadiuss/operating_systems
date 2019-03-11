@@ -29,7 +29,7 @@ char **create_file_table(int size) {
 //TODO: validation
 int find_file(s_file *file, const char *tmp_file_name) {
     char command[512];
-    sprintf(command, "find %s -name \"*%s*\" > %s", file->location, file->file_name, tmp_file_name);
+    sprintf(command, "find %s -name \"*%s*\" > /tmp/%s", file->location, file->file_name, tmp_file_name);
     system(command);
 }
 

@@ -48,7 +48,7 @@ double timeval_diff(struct timeval t1, struct timeval t2) {
     return ((double) t2.tv_sec - t1.tv_sec) * 1000.0f + ((double) t2.tv_usec - t1.tv_usec) / 1000.0f;
 }
 
-void exec_with_time(void (*op)(char**, int), char **args, int i) {
+void exec_with_time(void (*op)(char**, int), char **args, int i, const char *name) {
     struct timeval start, end;
     struct rusage d_start, d_end;
     getrusage(RUSAGE_SELF, &d_start);
@@ -60,32 +60,47 @@ void exec_with_time(void (*op)(char**, int), char **args, int i) {
     double real_ms = timeval_diff(start, end);
     double user_ms = timeval_diff(d_start.ru_utime, d_end.ru_utime);
     double system_ms = timeval_diff(d_start.ru_stime, d_end.ru_stime);
-    printf("Operation time:\n user: %fms\n system: %fms\n real: %fms\n", user_ms, system_ms, real_ms);
+    printf("Operation %s time:\n user: %fms\n system: %fms\n real: %fms\n", name, user_ms, system_ms, real_ms);
+}
+
+void validate_args_num(int argc, int i, int c) {
+    if(i + c > argc) {
+        fprintf(stderr, "Unexpected number of arguments");
+        exit(1);
+    }
+}
+
+void process_commands(char** argv, int argc) {
+    int i = 1;
+    while(i < argc) {
+        char* command = argv[i];
+        // for operations arguments have different meaning, not argv and argc, but argv and starting index
+        if(strcmp(command, "create_table") == 0){
+            validate_args_num(argc, i, 2);
+            exec_with_time(create_table, argv, i, "creating table");
+            i = i + 2;
+        } else if(strcmp(command, "search_directory") == 0) {
+            validate_args_num(argc, i, 4);
+            exec_with_time(search_directory, argv, i, "searching directory");
+            exec_with_time(insert_to_table, argv, i, "inserting to table");
+            i = i + 4;
+        } else if(strcmp(command, "remove_block") == 0) {
+            validate_args_num(argc, i, 2);
+            exec_with_time(remove_block, argv, i, "removing block");
+            i = i + 2;
+        } else {
+            fprintf(stderr, "Unknown command");
+            exit(1);
+        }
+    }
+    functions.clear_table(file_table, TAB_SIZE);
 }
 
 int main(int argc, char** argv) {
     load_library(&functions);
-    int i = 1;
-    while(i < argc) {
-        //TODO: validation of number of argument
-        char* command = argv[i];
-        if(strcmp(command, "create_table") == 0){
-            exec_with_time(create_table, argv, i);
-            i = i + 2;
-        } else if(strcmp(command, "search_directory") == 0) {
-            exec_with_time(search_directory, argv, i);
-            exec_with_time(insert_to_table, argv, i);
-            i = i + 4;
-        } else if(strcmp(command, "remove_block") == 0) {
-            exec_with_time(remove_block, argv, i);
-            i = i + 2;
-        } else {
-            fprintf(stderr, "Unknown command");
-            return 1;
-        }
-    }
-    //print_files(file_table, TAB_SIZE);
-    functions.clear_table(file_table, TAB_SIZE);
+    // for process_commands arguments are argv and argc
+    // for operations arguments have different meanings
+    exec_with_time(process_commands, argv, argc, "total");
     unload_library(&functions);
     return 0;
 }

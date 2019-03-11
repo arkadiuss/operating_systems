@@ -1,6 +1,7 @@
 //
 // Created by arkadius on 09.03.19.
 //
+#include <stdio.h>
 #include "library_loader.h"
 
 int load_library(fm_functions *functions) {
