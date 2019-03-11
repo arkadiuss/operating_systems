@@ -9,7 +9,7 @@
 int load_library(fm_functions *functions) {
     void *handle = dlopen("./file_managing_library.so", RTLD_LAZY);
     if(!handle) {
-        fprintf(stderr, "Unable to load file_managing_library");
+        fprintf(stderr, "Unable to load file_managing_library\n");
         return 1;
     }
     functions->get_current_location = dlsym(handle, "get_current_location");
@@ -26,7 +26,6 @@ int load_library(fm_functions *functions) {
     char* error;
     if((error = dlerror()) != NULL) {
         fprintf(stderr, "Errored: %s", error);
-        fflush(stderr);
         return 1;
     }
     return 0;

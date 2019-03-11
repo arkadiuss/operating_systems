@@ -11,8 +11,8 @@ typedef struct file {
 } s_file;
 
 s_file get_current_location();
-int set_location(s_file * file, const char* location);
-int set_file_name(s_file * file, const char* location);
+void set_location(s_file * file, const char* location);
+void set_file_name(s_file * file, const char* location);
 
 char** create_file_table(int size);
 int find_file(s_file *file, const char *tmp_file_name);

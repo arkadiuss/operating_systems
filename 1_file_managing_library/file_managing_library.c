@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include "file_managing_library.h"
 
+const char *tmp_location = "/tmp";
+
 s_file get_current_location() {
     s_file file;
     strcpy(file.location, ".");
@@ -13,30 +15,29 @@ s_file get_current_location() {
     return file;
 }
 
-int set_location(s_file *file, const char *location) {
+void set_location(s_file *file, const char *location) {
     strcpy(file -> location, location);
-    return 0;
 }
 
-int set_file_name(s_file *file, const char *file_name) {
+void set_file_name(s_file *file, const char *file_name) {
     strcpy(file -> file_name, file_name);
-    return 0;
 }
 
 char **create_file_table(int size) {
     return (char**) calloc(size, sizeof(char*));
 }
-//TODO: validation
+
 int find_file(s_file *file, const char *tmp_file_name) {
     char command[512];
-    sprintf(command, "find %s -name \"*%s*\" > /tmp/%s", file->location, file->file_name, tmp_file_name);
-    system(command);
+    sprintf(command, "find %s -name \"*%s*\" > %s/%s", file->location, file->file_name, tmp_location, tmp_file_name);
+    return system(command);
 }
 
 int get_free_index(char **file_table, int file_tab_size) {
     for(int i = 0; i < file_tab_size; i++) {
         if(file_table[i] == NULL) return i;
     }
+    fprintf(stderr, "No space left in the table\n");
     return -1;
 }
 
@@ -60,7 +61,9 @@ char* read_file_content(FILE *file, long file_size) {
 //TODO: too big files
 char* read_file(const char* file_name) {
     FILE *file;
-    if((file = fopen(file_name, "r")) == NULL){
+    char file_path[1024];
+    sprintf(file_path, "%s/%s", tmp_location, file_name);
+    if((file = fopen(file_path, "r")) == NULL){
         return NULL;
     }
     long file_size = get_file_size(file);
@@ -70,16 +73,25 @@ char* read_file(const char* file_name) {
 }
 
 int insert_content_to_table(char **file_table, int file_tab_size, const char *tmp_file_name) {
-    int index;
-    if((index = get_free_index(file_table, file_tab_size)) != 0){
+    if(file_table == NULL) {
+        fprintf(stderr, "File table uninitialized\n");
         return -1;
     }
-    file_table[index] = read_file(tmp_file_name);
+    int index;
+    if((index = get_free_index(file_table, file_tab_size)) == -1){
+        return -1;
+    }
+    if((file_table[index] = read_file(tmp_file_name)) == NULL){
+        return -1;
+    }
     return index;
 }
 
 int find_and_insert_named(char **file_table, int file_tab_size, s_file *file, const char *tmp_file_name) {
-    find_file(file, tmp_file_name);
+    int err;
+    if((err = find_file(file, tmp_file_name)) == -1){
+        return err;
+    }
     return insert_content_to_table(file_table, file_tab_size, tmp_file_name);
 }
 

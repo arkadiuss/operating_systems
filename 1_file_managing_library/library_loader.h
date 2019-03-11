@@ -9,8 +9,8 @@
 
 typedef struct fm_functions {
     s_file (*get_current_location)();
-    int (*set_location)(s_file*, const char*);
-    int (*set_file_name)(s_file*, const char*);
+    void (*set_location)(s_file*, const char*);
+    void (*set_file_name)(s_file*, const char*);
 
     char** (*create_file_table)(int);
     int (*find_file)(s_file *file, const char*);

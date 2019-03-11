@@ -31,13 +31,13 @@ Otest-shared:
 Otest-dynamic:
 	$(foreach i, $(OFLAGS), $(call make-Otest,$(i),dynamic))
 
-static: library_loader_static.o file_managing_library.o
+static: library_loader_static.o file_managing_library.o main.c
 	$(CC) $(CFLAGS) $(OFLAG) -o fm library_loader_static.o file_managing_library.o main.c
 
-shared: file_managing_library.so library_loader.so
+shared: file_managing_library.so library_loader.so main.c
 	$(CC) $(CFLAGS) $(OFLAG) -o fm main.c library_loader.so file_managing_library.so
 
-dynamic: library_loader_dynamic.o file_managing_library.so
+dynamic: library_loader_dynamic.o file_managing_library.so main.c
 	$(CC)) $(CFLAGS) $(OFLAG) -o fm main.c library_loader_dynamic.o -ldl
 
 library_loader_static.o: library_loader.h library_loader_static.c
@@ -49,7 +49,7 @@ library_loader_dynamic.o: library_loader.h library_loader_dynamic.c
 library_loader.so: library_loader.h library_loader_static.c
 	$(CC) $(CFLAGS) $(OFLAG) -shared -fPIC -o library_loader.so library_loader_static.c
 
-file_managing_library.o: file_managing_library.h
+file_managing_library.o: file_managing_library.h file_managing_library.c
 	$(CC) $(CFLAGS) $(OFLAG) -c file_managing_library.c
 
 file_managing_library.so: file_managing_library.h file_managing_library.c
