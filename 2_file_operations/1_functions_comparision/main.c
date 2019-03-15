@@ -7,13 +7,13 @@ int generate_file(char **args){
     char *file_name = args[2];
     char *records_count = args[3];
     char *record_size = args[4];
-    generate(file_name, atoi(records_count), atoi(record_size));
+    return generate(file_name, atoi(records_count), atoi(record_size));
 }
 
 int check_type(char *type) {
     if(strcmp(type, "lib") == 0) {
         return 0;
-    } else if(strcmp(type, "sys")){
+    } else if(strcmp(type, "sys") == 0){
         return 1;
     } else {
         fprintf(stderr, "Unknown type - only lib or sys");
