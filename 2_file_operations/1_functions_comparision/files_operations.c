@@ -69,6 +69,36 @@ int sys_sort(char *file_name, int records_count, int record_size) {
 }
 
 int lib_sort(char *file_name, int records_count, int record_size) {
+    FILE* file = fopen(file_name, "r+");
+    if(file == NULL) {
+        fprintf(stderr, "Unable to open requested file");
+        return -1;
+    }
+    char *nxt_record = malloc(sizeof(char) * record_size);
+    char *min_record = malloc(sizeof(char) * record_size);
+    for(int cur = 0; cur < records_count; cur++){
+        fseek(file, cur * record_size * sizeof(char), SEEK_SET);
+        fread(min_record, sizeof(char), record_size, file);
+        int min_off = cur;
+        for(int nxt = cur + 1; nxt < records_count; nxt++){
+            fread(nxt_record, sizeof(char), 1, file);
+            if(nxt_record[0] < min_record[0]){
+                min_record[0] = nxt_record[0];
+                fread(min_record + 1, sizeof(char), record_size - 1, file);
+                min_off = nxt;
+            } else {
+                fseek(file, (record_size - 1) * sizeof(char), SEEK_CUR);
+            }
+        }
+        fseek(file, sizeof(char) * cur * record_size, SEEK_SET);
+        fread(nxt_record, sizeof(char), record_size, file);
+        fseek(file, sizeof(char) * (min_off - cur - 1) * record_size, SEEK_CUR);
+        fwrite(nxt_record, sizeof(char), record_size, file);
+        fseek(file, sizeof(char) * cur * record_size, SEEK_SET);
+        fwrite(min_record, sizeof(char), record_size, file);
+    }
+    free(nxt_record);
+    free(min_record);
     return 0;
 }
 
