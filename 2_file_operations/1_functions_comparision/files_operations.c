@@ -12,7 +12,7 @@
 
 void fill_with_random(char *record, int record_size){
     for(int i = 0; i < record_size; i++){
-        record[i] = (char) rand()%26+65;
+        record[i] = (char) (rand()%25+65);
     }
 }
 
@@ -27,7 +27,6 @@ int generate(char *file_name, int records_count, int record_size) {
     char* record = malloc(sizeof(char)*record_size);
     while(records_count--){
         fill_with_random(record, record_size);
-        printf("%s", record);
         write(fd, record, record_size);
     }
     close(fd);
@@ -36,7 +35,36 @@ int generate(char *file_name, int records_count, int record_size) {
 }
 
 int sys_sort(char *file_name, int records_count, int record_size) {
-
+    int fd = open(file_name, O_RDWR);
+    if(fd == -1) {
+        fprintf(stderr, "Unable to open requested file");
+        return -1;
+    }
+    char *nxt_record = malloc(sizeof(char) * record_size);
+    char *min_record = malloc(sizeof(char) * record_size);
+    for(int cur = 0; cur < records_count; cur++){
+        lseek(fd, cur*record_size, SEEK_SET);
+        read(fd, min_record, record_size);
+        int min_off = cur;
+        for(int nxt = cur + 1; nxt < records_count; nxt++){
+            read(fd, nxt_record, 1);
+            if(nxt_record[0] < min_record[0]){
+                min_record[0] = nxt_record[0];
+                read(fd, min_record + 1, record_size - 1);
+                min_off = nxt;
+            } else {
+                lseek(fd, record_size - 1, SEEK_CUR);
+            }
+        }
+        lseek(fd, cur*record_size, SEEK_SET);
+        read(fd, nxt_record, record_size);
+        lseek(fd, (min_off - cur - 1)*record_size, SEEK_CUR);
+        write(fd, nxt_record, record_size);
+        lseek(fd, cur*record_size, SEEK_SET);
+        write(fd, min_record, record_size);
+    }
+    free(nxt_record);
+    free(min_record);
     return 0;
 }
 
