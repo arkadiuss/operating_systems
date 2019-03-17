@@ -49,7 +49,7 @@ long get_file_size(FILE *file) {
 }
 
 char* read_file_content(FILE *file, long file_size) {
-    char *file_content = (char*) malloc(file_size);
+    char *file_content = (char*) malloc((size_t) (file_size + 1));
     int character;
     int n = 0;
     while((character = fgetc(file)) != EOF){

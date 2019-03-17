@@ -103,21 +103,25 @@ int process_commands(char** argv, int argc) {
         if(strcmp(command, "create_table") == 0){
             validate_args_num(argc, i, 2);
             if((err = exec_with_time(create_table, argv, i, "creating table")) != 0){
+                functions.clear_table(file_table, TAB_SIZE);
                 return err;
             }
             i = i + 2;
         } else if(strcmp(command, "search_directory") == 0) {
             validate_args_num(argc, i, 4);
             if((err = exec_with_time(search_directory, argv, i, "searching directory")) != 0){
+                functions.clear_table(file_table, TAB_SIZE);
                 return err;
             }
             if((err = exec_with_time(insert_to_table, argv, i, "inserting to table")) != 0){
+                functions.clear_table(file_table, TAB_SIZE);
                 return err;
             }
             i = i + 4;
         } else if(strcmp(command, "remove_block") == 0) {
             validate_args_num(argc, i, 2);
             if((err = exec_with_time(remove_block, argv, i, "removing block")) != 0){
+                functions.clear_table(file_table, TAB_SIZE);
                 return err;
             }
             i = i + 2;

@@ -35,6 +35,16 @@ const char *get_file_type(mode_t mode) {
     return "unknown";
 }
 
+f_file create_file(char *path, mode_t mode, size_t size, time_t atime, time_t mtime) {
+    f_file file;
+    strcpy(file.path, path);
+    file.mode = mode;
+    file.atime = atime;
+    file.mtime = mtime;
+    file.size = size;
+    return file;
+}
+
 void print_if(f_file file, time_t condition, int (*compare)(time_t, time_t)) {
     if(compare(file.mtime, condition)){
         printf("%s type: %s size: %d accesed: %d modified: %d \n",
@@ -57,12 +67,7 @@ void find_recursively_dir(char *path, time_t condition, int (*compare)(time_t, t
             if ((stat.st_mode & S_IFDIR)) {
                 find_recursively_dir(next_path, condition, compare);
             }
-            f_file file;
-            strcpy(file.path, next_path);
-            file.mode = stat.st_mode;
-            file.atime = stat.st_atime;
-            file.mtime = stat.st_mtime;
-            file.size = (size_t) stat.st_size;
+            f_file file = create_file(next_path, stat.st_mode, (size_t) stat.st_size, stat.st_atime, stat.st_mtime);
             print_if(file, condition, compare);
         }
     }
@@ -78,12 +83,7 @@ int (*compare)(time_t, time_t);
 
 int tree_callback(const char *fpath, const struct stat *sb,
                   int typeflag, struct FTW *ftwbuf) {
-    f_file file;
-    strcpy(file.path, fpath);
-    file.mode = sb->st_mode;
-    file.atime = sb->st_atime;
-    file.mtime = sb->st_mtime;
-    file.size = (size_t) sb->st_size;
+    f_file file = create_file(fpath, sb->st_mode, (size_t) sb->st_size, sb->st_atime, sb->st_mtime);
     print_if(file, condition, compare);
     return FTW_CONTINUE;
 }
