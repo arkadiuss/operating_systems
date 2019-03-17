@@ -63,6 +63,7 @@ int sys_sort(char *file_name, int records_count, int record_size) {
         lseek(fd, cur*record_size, SEEK_SET);
         write(fd, min_record, record_size);
     }
+    close(fd);
     free(nxt_record);
     free(min_record);
     return 0;
@@ -97,6 +98,7 @@ int lib_sort(char *file_name, int records_count, int record_size) {
         fseek(file, sizeof(char) * cur * record_size, SEEK_SET);
         fwrite(min_record, sizeof(char), record_size, file);
     }
+    fclose(file);
     free(nxt_record);
     free(min_record);
     return 0;
@@ -115,6 +117,8 @@ int sys_copy(char *file_name_src, char *file_name_dest, int records_count, int r
         (readed_size = read(fd_src, record, record_size)) != 0) {
         write(fd_dest, record, readed_size);
     }
+    close(fd_src);
+    close(fd_dest);
     free(record);
     return 0;
 }
@@ -132,6 +136,8 @@ int lib_copy(char *file_name_src, char *file_name_dest, int records_count, int r
         (readed_size = fread(record, sizeof(char), record_size, src)) != 0) {
         fwrite(record, sizeof(char), readed_size, dest);
     }
+    fclose(src);
+    fclose(dest);
     free(record);
     return 0;
 }

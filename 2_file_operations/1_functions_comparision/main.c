@@ -38,14 +38,14 @@ int copy(char **args){
 
 int sort(char **args){
     char *file_name = args[2];
-    char *records_count = args[3];
-    char *record_size = args[4];
+    int records_count = atoi(args[3]);
+    int record_size = atoi(args[4]);
     char *type = args[5];
     switch (check_type(type)) {
         case 0:
-            return lib_sort(file_name, atoi(records_count), atoi(record_size));
+            return lib_sort(file_name, records_count, record_size);
         case 1:
-            return sys_sort(file_name, atoi(records_count), atoi(record_size));
+            return sys_sort(file_name, records_count, record_size);
     }
     return 1;
 }
