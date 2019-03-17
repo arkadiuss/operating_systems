@@ -1,12 +1,14 @@
 //
 // Created by arkadius on 16.03.19.
 //
-
-#include <dirent.h>
+#define _XOPEN_SOURCE 700
+#define  _GNU_SOURCE
 #include "file_finder.h"
+#include <dirent.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <ftw.h>
 
 int not_dot(char *name) {
     if(strcmp(name, ".") == 0|| strcmp(name, "..") == 0)
@@ -71,6 +73,24 @@ void find_with_dir(char *path, time_t condition, int (*compare)(time_t, time_t))
     find_recursively_dir(path, condition, compare);
 }
 
-void find_with_nftw(char *path, time_t condition, int (*compare)(time_t, time_t)) {
+time_t condition;
+int (*compare)(time_t, time_t);
 
+int tree_callback(const char *fpath, const struct stat *sb,
+                  int typeflag, struct FTW *ftwbuf) {
+    f_file file;
+    strcpy(file.path, fpath);
+    file.mode = sb->st_mode;
+    file.atime = sb->st_atime;
+    file.mtime = sb->st_mtime;
+    file.size = (size_t) sb->st_size;
+    print_if(file, condition, compare);
+    return FTW_CONTINUE;
+}
+
+
+void find_with_nftw(char *path, time_t _condition, int (*_compare)(time_t, time_t)) {
+    condition = _condition;
+    compare = _compare;
+    nftw(path, tree_callback, 100, 0);
 }

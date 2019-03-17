@@ -47,6 +47,6 @@ int main(int argc, char **argv) {
     char *path = argv[1];
     int (*compare)(time_t, time_t) = get_command(argv[2]);
     time_t time = get_time(argv[3]);
-    find_with_dir(path, time, compare);
+    find_with_nftw(path, time, compare);
     return 0;
 }
