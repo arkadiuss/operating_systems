@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include "files_operations.h"
 
 int generate_file(char **args){
@@ -57,18 +59,41 @@ void check_arg_count(int argc, int desired){
     }
 }
 
+double timeval_diff(struct timeval t1, struct timeval t2) {
+    return ((double) t2.tv_sec - t1.tv_sec) * 1000.0f + ((double) t2.tv_usec - t1.tv_usec) / 1000.0f;
+}
+
+int exec_with_time(int (*operation)(char**), char **args, const char *name) {
+    struct timeval start, end;
+    struct rusage d_start, d_end;
+    getrusage(RUSAGE_SELF, &d_start);
+    gettimeofday(&start, NULL);
+    int err;
+    if((err = operation(args)) == -1){
+        return err;
+    }
+    getrusage(RUSAGE_SELF, &d_end);
+    gettimeofday(&end, NULL);
+    double real_ms = timeval_diff(start, end);
+    double user_ms = timeval_diff(d_start.ru_utime, d_end.ru_utime);
+    double system_ms = timeval_diff(d_start.ru_stime, d_end.ru_stime);
+    printf("Operation %s time:\n user: %fms\n system: %fms\n real: %fms\n", name, user_ms, system_ms, real_ms);
+    return 0;
+}
+
+
 int handle_command(int argc, char **argv) {
     check_arg_count(argc, 1);
     char *command = argv[1];
     if(strcmp(command, "generate") == 0){
         check_arg_count(argc, 4);
-        generate_file(argv);
+        exec_with_time(generate_file,argv,"generating");
     } else if (strcmp(command, "sort") == 0) {
         check_arg_count(argc, 5);
-        sort(argv);
+        exec_with_time(sort,argv,"sorting");
     } else if (strcmp(command, "copy") == 0) {
         check_arg_count(argc, 6);
-        copy(argv);
+        exec_with_time(copy,argv,"copying");
     } else {
         fprintf(stderr, "Unknown command");
         return 1;
