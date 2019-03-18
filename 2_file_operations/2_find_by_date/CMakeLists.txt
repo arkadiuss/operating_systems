@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
-project(2_find_by_date C)
-
+project(FindByDate C)
+add_definitions(-Wall)
 set(CMAKE_C_STANDARD 99)
-
-add_executable(2_find_by_date main.c file_finder.c file_finder.h)
+set(SOURCES main.c file_finder.c file_finder.h)
+add_executable(ff ${SOURCES})

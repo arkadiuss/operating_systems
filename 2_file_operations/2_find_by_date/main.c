@@ -1,8 +1,9 @@
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "file_finder.h"
 
 int lower(time_t t1, time_t t2) {
@@ -10,7 +11,8 @@ int lower(time_t t1, time_t t2) {
 }
 
 int equal(time_t t1, time_t t2) {
-    return t1 == t2;
+    long long to_days = 60LL*60LL*24LL + 7200;
+    return abs(t1 - t2)/to_days == 0;
 }
 
 int greater(time_t t1, time_t t2) {
@@ -44,7 +46,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Wrong arguments count");
         return 1;
     }
-    char *path = argv[1];
+    char path[1024];
+    realpath(argv[1], path);
     int (*compare)(time_t, time_t) = get_command(argv[2]);
     time_t time = get_time(argv[3]);
     find_with_nftw(path, time, compare);

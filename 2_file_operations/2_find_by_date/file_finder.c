@@ -47,8 +47,14 @@ f_file create_file(char *path, mode_t mode, size_t size, time_t atime, time_t mt
 
 void print_if(f_file file, time_t condition, int (*compare)(time_t, time_t)) {
     if(compare(file.mtime, condition)){
-        printf("%s type: %s size: %d accesed: %d modified: %d \n",
-                file.path, get_file_type(file.mode), file.size, file.atime, file.mtime);
+        struct tm *mtm, *atm;
+        char mstr[20], astr[20];
+        mtm = localtime(&file.mtime);
+        strftime(mstr, 20, "%d-%m-%Y", mtm);
+        atm = localtime(&file.atime);
+        strftime(astr, 20, "%d-%m-%Y", atm);
+        printf("%s type: %s size: %d accessed: %s modified: %s \n",
+                file.path, get_file_type(file.mode), (int) file.size, astr, mstr);
     }
 }
 
