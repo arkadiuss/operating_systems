@@ -35,7 +35,7 @@ const char *get_file_type(mode_t mode) {
     return "unknown";
 }
 
-f_file create_file(char *path, mode_t mode, size_t size, time_t atime, time_t mtime) {
+f_file create_file(const char *path, mode_t mode, size_t size, time_t atime, time_t mtime) {
     f_file file;
     strcpy(file.path, path);
     file.mode = mode;
