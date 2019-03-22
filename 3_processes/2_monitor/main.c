@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <wait.h>
 #include "monitor.h"
 
 int observing_time;
@@ -29,7 +30,7 @@ int get_time(char *time) {
 Mode get_mode(char *mode){
     if(strcmp(mode, "archive") == 0) {
         return ARCHIVE;
-    } else if(strcmp(mode, "COPY") == 0) {
+    } else if(strcmp(mode, "copy") == 0) {
         return COPY;
     } else {
         fprintf(stderr, "Unknown mode");
@@ -47,19 +48,19 @@ void remove_new_line(char *str){
 }
 
 void observe_file(char *file_and_time){
-    char *file_name, *time;
+    char *file_name, *interval;
     const char *delimiter = " ";
     file_name = strtok(file_and_time, delimiter);
-    time = strtok(NULL, delimiter);
-    if(file_name == NULL || time == NULL) {
+    interval = strtok(NULL, delimiter);
+    if(file_name == NULL || interval == NULL) {
         fprintf(stderr, "File should consist file name and time in every line");
         exit(1);
     }
-    remove_new_line(time);
-    if(!is_integer(time)){
+    remove_new_line(interval);
+    if(!is_integer(interval)){
         exit(1);
     }
-    observe(file_name, atoi(time), observing_time, observing_mode);
+    observe(file_name, atoi(interval), observing_time, observing_mode);
 }
 void get_and_observe_files(const char *files_list) {
     FILE *file;
@@ -84,5 +85,8 @@ int main(int argc, char **argv) {
     observing_mode = get_mode(argv[3]);
     observing_time = get_time(argv[2]);
     get_and_observe_files(argv[1]);
+    int status;
+    wait(&status);
+
     return 0;
 }

@@ -9,6 +9,6 @@ typedef enum Mode {
     ARCHIVE, COPY
 } Mode;
 
-void observe(const char* file_name, int step, int time, Mode mode);
+void observe(const char* file_name, int interval, int lifespan, Mode mode);
 
 #endif //INC_2_MONITOR_MONITOR_H
