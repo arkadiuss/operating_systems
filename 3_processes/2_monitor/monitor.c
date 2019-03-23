@@ -25,7 +25,9 @@ char *get_date(time_t time){
 
 time_t get_modification_time(const char* path) {
     struct stat stats;
-    stat(path, &stats);
+    if(stat(path, &stats) == -1){
+        return -1;
+    }
     return stats.st_mtime;
 }
 
@@ -57,7 +59,7 @@ char* read_file(const char *file_name){
         fclose(file);
         return buffer;
     } else {
-        fprintf(stderr, "Unable to open file");
+        fprintf(stderr, "Unable to open file to read\n");
         return NULL;
     }
 }
@@ -69,11 +71,10 @@ void write_file(const char *file_name, char *buffer, time_t mod) {
     sprintf(new_path, "%s/%s_%s", BACKUP_FOLDER, last_index_of(file_name, '/'), date);
     free(date);
     if((file = fopen(new_path, "w")) != NULL) {
-        printf("Writing to %s", new_path);
         fwrite(buffer, sizeof(char), (size_t) strlen(buffer), file);
         fclose(file);
     } else {
-        fprintf(stderr, "Unable to open file");
+        fprintf(stderr, "Unable to open file to write \n");
     }
 }
 
