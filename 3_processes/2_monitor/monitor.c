@@ -43,33 +43,35 @@ long get_file_size(FILE *file) {
     return size;
 }
 
-long read_file(const char *file_name, char *buffer){
+char* read_file(const char *file_name){
     FILE *file;
     if((file = fopen(file_name, "r")) != NULL) {
         int c;
         long size = get_file_size(file);
-        buffer = realloc(buffer, (size_t) size + 1);
+        char* buffer = malloc((size_t) size + 1);
         long i = 0;
         while((c = getc(file)) != EOF) {
             buffer[i++] = (char) c;
         }
         buffer[i] = '\0';
-        return i;
+        fclose(file);
+        return buffer;
     } else {
         fprintf(stderr, "Unable to open file");
-        return -1;
+        return NULL;
     }
 }
 
-void write_file(const char *file_name, char **buffer, long size, time_t mod) {
+void write_file(const char *file_name, char *buffer, time_t mod) {
     FILE *file;
     char new_path[1024];
     char *date = get_date(mod);
     sprintf(new_path, "%s/%s_%s", BACKUP_FOLDER, last_index_of(file_name, '/'), date);
     free(date);
-    printf("Writing to %s", new_path);
-    if((file = fopen(file_name, "w")) != NULL) {
-        fwrite(buffer, sizeof(char), (size_t) size, file);
+    if((file = fopen(new_path, "w")) != NULL) {
+        printf("Writing to %s", new_path);
+        fwrite(buffer, sizeof(char), (size_t) strlen(buffer), file);
+        fclose(file);
     } else {
         fprintf(stderr, "Unable to open file");
     }
@@ -80,19 +82,18 @@ void observe_file_archive(const char *file_name, int interval, int lifespan){
     time_t last_mod = -1;
     int n = 0;
     char *content = NULL;
-    long file_size = -1;
     while(remainingTime > 0) {
         time_t mod = get_modification_time(file_name);
         if(mod != last_mod) {
-            printf("I'm making copy of %s\n", file_name);
             fflush(stdout);
             if(content != NULL) {
-                write_file(file_name, &content, file_size, last_mod);
+                write_file(file_name, content, last_mod);
                 n++;
+                free(content);
             }
-            file_size = read_file(file_name, content);
+            content = read_file(file_name);
             last_mod = mod;
-            printf("Readed file %s\n", content);
+            printf("Read file %s\n", content);
         }
         int sleepTime = remainingTime < interval ? remainingTime : interval;
         sleep(sleepTime);
