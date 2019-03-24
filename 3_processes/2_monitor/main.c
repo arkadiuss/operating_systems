@@ -4,6 +4,9 @@
 #include <errno.h>
 #include <wait.h>
 #include "monitor.h"
+#define _XOPEN_SOURCE_EXTENDED 1
+
+#include <sys/resource.h>
 
 int observing_time, cpu_limit = -1, mem_limit = -1;
 Mode observing_mode;
@@ -47,7 +50,7 @@ void remove_new_line(char *str){
     }
 }
 
-void observe_file(char *file_and_time){
+int observe_file(char *file_and_time){
     char *file_name, *interval;
     const char *delimiter = " ";
     file_name = strtok(file_and_time, delimiter);
@@ -61,9 +64,9 @@ void observe_file(char *file_and_time){
         exit(1);
     }
     if(mem_limit == -1 && cpu_limit == -1)
-        observe(file_name, atoi(interval), observing_time, observing_mode);
+        return observe(file_name, atoi(interval), observing_time, observing_mode);
     else
-        observe_restricted(file_name, atoi(interval), observing_time, observing_mode, cpu_limit, mem_limit);
+        return observe_restricted(file_name, atoi(interval), observing_time, observing_mode, cpu_limit, mem_limit);
 }
 
 void get_and_observe_files(const char *files_list) {
@@ -95,6 +98,12 @@ int main(int argc, char **argv) {
     get_and_observe_files(argv[1]);
     int status;
     wait(&status);
+    printf("STATUS1 %d", status);
+    wait(&status);
+    printf("STATUS2 %d", status);
+    struct rusage usage;
+    getrusage(RUSAGE_CHILDREN, &usage);
+    printf("usagegege2 %ld %ld %ld",  usage.ru_maxrss, usage.ru_ixrss, usage.ru_idrss);
 
     return 0;
 }

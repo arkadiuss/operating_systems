@@ -1,6 +1,7 @@
 //
 // Created by arkadius on 20.03.19.
 //
+#define _XOPEN_SOURCE_EXTENDED 1
 
 #include <stdio.h>
 #include <unistd.h>
@@ -11,6 +12,7 @@
 #include <wait.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/resource.h>
 #include "monitor.h"
 
 const char* BACKUP_FOLDER = "./backup";
@@ -51,6 +53,7 @@ char* read_file(const char *file_name){
         int c;
         long size = get_file_size(file);
         char* buffer = malloc((size_t) size + 1);
+        for(int i=0;i<size + 1;i++) buffer[i] = 'a';
         long i = 0;
         while((c = getc(file)) != EOF) {
             buffer[i++] = (char) c;
@@ -143,7 +146,7 @@ void observe_file_exec(const char *file_name, int interval, int lifespan){
     exit(0);
 }
 
-void observe(const char *file_name, int interval, int lifespan, Mode mode) {
+int observe(const char *file_name, int interval, int lifespan, Mode mode) {
     printf("I will observe %s for %ds every %ds\n", file_name, lifespan, interval);
     int pid;
     if((pid = fork()) == 0) {
@@ -156,13 +159,21 @@ void observe(const char *file_name, int interval, int lifespan, Mode mode) {
                 break;
         }
     }
+    return pid;
 }
 
-void observe_restricted(const char *file_name, int interval, int lifespan, Mode mode, int cpu_limit, int memory_limit) {
+int observe_restricted(const char *file_name, int interval, int lifespan, Mode mode, int cpu_limit, int memory_limit) {
     printf("I will observe %s for %ds every %ds with restrictions %d cpu %d memory\n",
             file_name, lifespan, interval, cpu_limit, memory_limit);
     int pid;
     if((pid = fork()) == 0) {
+        struct rlimit cpu_rlimit, memory_rlimit;
+        cpu_rlimit.rlim_cur = (rlim_t) cpu_limit;
+        memory_rlimit.rlim_cur = (rlim_t) memory_limit;
+        cpu_rlimit.rlim_max = (rlim_t) cpu_limit;
+        memory_rlimit.rlim_max = (rlim_t) memory_limit;
+        setrlimit(RLIMIT_AS, &memory_rlimit);
+        setrlimit(RLIMIT_CPU, &cpu_rlimit);
         switch (mode) {
             case ARCHIVE:
                 observe_file_archive(file_name, interval, lifespan);
@@ -172,4 +183,5 @@ void observe_restricted(const char *file_name, int interval, int lifespan, Mode 
                 break;
         }
     }
+    return pid;
 }
