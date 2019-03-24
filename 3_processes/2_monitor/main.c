@@ -5,7 +5,7 @@
 #include <wait.h>
 #include "monitor.h"
 
-int observing_time;
+int observing_time, cpu_limit = -1, mem_limit = -1;
 Mode observing_mode;
 
 int is_integer(char* text){
@@ -20,11 +20,11 @@ int is_integer(char* text){
     return 1;
 }
 
-int get_time(char *time) {
-    if(!is_integer(time)){
+int get_integer(char *i) {
+    if(!is_integer(i)){
         exit(1);
     }
-    return atoi(time);
+    return atoi(i);
 }
 
 Mode get_mode(char *mode){
@@ -60,8 +60,12 @@ void observe_file(char *file_and_time){
     if(!is_integer(interval)){
         exit(1);
     }
-    observe(file_name, atoi(interval), observing_time, observing_mode);
+    if(mem_limit == -1 && cpu_limit == -1)
+        observe(file_name, atoi(interval), observing_time, observing_mode);
+    else
+        observe_restricted(file_name, atoi(interval), observing_time, observing_mode, cpu_limit, mem_limit);
 }
+
 void get_and_observe_files(const char *files_list) {
     FILE *file;
     if((file = fopen(files_list, "r")) == NULL) {
@@ -78,12 +82,16 @@ void get_and_observe_files(const char *files_list) {
 }
 
 int main(int argc, char **argv) {
-    if(argc < 4) {
+    if(argc < 4 || argc == 5) {
         fprintf(stderr, "Wrong arguments count");
         return 1;
     }
     observing_mode = get_mode(argv[3]);
-    observing_time = get_time(argv[2]);
+    observing_time = get_integer(argv[2]);
+    if(argc > 4) {
+        cpu_limit = get_integer(argv[4]);
+        mem_limit = get_integer(argv[5]);
+    }
     get_and_observe_files(argv[1]);
     int status;
     wait(&status);

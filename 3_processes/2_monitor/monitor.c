@@ -157,3 +157,19 @@ void observe(const char *file_name, int interval, int lifespan, Mode mode) {
         }
     }
 }
+
+void observe_restricted(const char *file_name, int interval, int lifespan, Mode mode, int cpu_limit, int memory_limit) {
+    printf("I will observe %s for %ds every %ds with restrictions %d cpu %d memory\n",
+            file_name, lifespan, interval, cpu_limit, memory_limit);
+    int pid;
+    if((pid = fork()) == 0) {
+        switch (mode) {
+            case ARCHIVE:
+                observe_file_archive(file_name, interval, lifespan);
+                break;
+            case COPY:
+                observe_file_exec(file_name, interval, lifespan);
+                break;
+        }
+    }
+}
