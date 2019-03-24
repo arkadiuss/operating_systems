@@ -97,7 +97,6 @@ void observe_file_archive(const char *file_name, int interval, int lifespan){
             }
             content = read_file(file_name);
             last_mod = mod;
-            printf("Read file %s\n", content);
         }
         int sleepTime = remainingTime < interval ? remainingTime : interval;
         sleep(sleepTime);
@@ -168,10 +167,8 @@ int observe_restricted(const char *file_name, int interval, int lifespan, Mode m
     int pid;
     if((pid = fork()) == 0) {
         struct rlimit cpu_rlimit, memory_rlimit;
-        cpu_rlimit.rlim_cur = (rlim_t) cpu_limit;
-        memory_rlimit.rlim_cur = (rlim_t) memory_limit;
         cpu_rlimit.rlim_max = (rlim_t) cpu_limit;
-        memory_rlimit.rlim_max = (rlim_t) memory_limit;
+        memory_rlimit.rlim_max = (rlim_t) ((long long) memory_limit) * 1000000LL;
         setrlimit(RLIMIT_AS, &memory_rlimit);
         setrlimit(RLIMIT_CPU, &cpu_rlimit);
         switch (mode) {
