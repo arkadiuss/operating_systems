@@ -31,6 +31,7 @@ void validate_args(int argc, char **argv) {
 
     if(strcmp(argv[2], argv[3]) == 1) {
         fprintf(stderr, "pmin should be greater than pmax");
+        exit(1);
     }
 }
 
