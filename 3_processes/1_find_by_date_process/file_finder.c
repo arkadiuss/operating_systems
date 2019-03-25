@@ -80,7 +80,7 @@ void find_recursively_dir(char *path, time_t condition, int (*compare)(time_t, t
         }
         printf("PID: %d, %s\n", getpid(), path);
         fflush(stdout);
-        if(execlp("ls", "ls", "-l", NULL) == -1){
+        if(execlp("ls", "ls", "-l", path, NULL) == -1){
             fprintf(stderr, "Unable to list");
             exit(1);
         }
