@@ -33,10 +33,9 @@ time_t get_modification_time(const char* path) {
     return stats.st_mtime;
 }
 
-char* last_index_of(char *name, char c) {
+const char* last_index_of(const char *name, char c) {
     char* ptr = strrchr(name, c);
-    return ptr == NULL ? name : ptr +
-    1;
+    return ptr == NULL ? name : ptr + 1;
 }
 
 long get_file_size(FILE *file) {
