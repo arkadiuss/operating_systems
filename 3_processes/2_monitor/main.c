@@ -116,7 +116,8 @@ int main(int argc, char **argv) {
     while(pids[i] != -1){
         waitpid(pids[i], &status, 0);
         getrusage(RUSAGE_CHILDREN, &usage);
-        printf("STATUS of %d is %d usage %ld %.3f %.3f\n", i, status, usage.ru_maxrss, to_milis(usage.ru_utime) - usr_sum,
+        printf("STATUS of %d is %d usage: maxrss %ld utime: %.3f stime: %.3f\n", i,
+                status, usage.ru_maxrss, to_milis(usage.ru_utime) - usr_sum,
                to_milis(usage.ru_stime) - sys_sum);
         sys_sum += to_milis(usage.ru_stime);
         usr_sum += to_milis(usage.ru_utime);
