@@ -17,6 +17,12 @@
 
 const char* BACKUP_FOLDER = "./backup";
 
+typedef struct {
+    char *content;
+    size_t size;
+    time_t mod;
+} file_content ;
+
 char *get_date(time_t time){
     struct tm * timeinfo;
     timeinfo = localtime ( &time );
@@ -46,63 +52,69 @@ long get_file_size(FILE *file) {
     return size;
 }
 
-char* read_file(const char *file_name){
+int read_file(const char *file_name, file_content* file_content){
     FILE *file;
     if((file = fopen(file_name, "r")) != NULL) {
-        int c;
-        long size = get_file_size(file);
-        char* buffer = malloc((size_t) size + 1);
-        for(int i=0;i<size + 1;i++) buffer[i] = 'a';
-        long i = 0;
-        while((c = getc(file)) != EOF) {
-            buffer[i++] = (char) c;
+        file_content->size = (size_t) get_file_size(file);
+        file_content->content = malloc((size_t) file_content->size + 1);
+        if(fread(file_content->content, sizeof(char), file_content->size, file) != file_content->size) {
+            fprintf(stderr, "Unable to read file\n");
+            free(file_content->content);
+            return -1;
         }
-        buffer[i] = '\0';
+        file_content->content[file_content->size] = '\0';
         fclose(file);
-        return buffer;
+        return 0;
     } else {
         fprintf(stderr, "Unable to open file to read\n");
-        return NULL;
+        return -1;
     }
 }
 
-void write_file(const char *file_name, char *buffer, time_t mod) {
+int write_file(const char *file_name, file_content* file_content) {
     FILE *file;
     char new_path[1024];
-    char *date = get_date(mod);
+    char *date = get_date(file_content->mod);
     sprintf(new_path, "%s/%s_%s", BACKUP_FOLDER, last_index_of(file_name, '/'), date);
     free(date);
     if((file = fopen(new_path, "w")) != NULL) {
-        fwrite(buffer, sizeof(char), (size_t) strlen(buffer), file);
+        fwrite(file_content->content, sizeof(char), file_content->size, file);
         fclose(file);
     } else {
         fprintf(stderr, "Unable to open file to write \n");
+        return -1;
     }
+    return 0;
 }
 
 void observe_file_archive(const char *file_name, int interval, int lifespan){
     int remainingTime = lifespan;
     time_t last_mod = -1;
     int n = 0;
-    char *content = NULL;
+    file_content file_content;
+    file_content.content = NULL;
     while(remainingTime > 0) {
-        time_t mod = get_modification_time(file_name);
-        if(mod != last_mod) {
+        file_content.mod = get_modification_time(file_name);
+        if(file_content.mod != last_mod) {
             fflush(stdout);
-            if(content != NULL) {
-                write_file(file_name, content, last_mod);
+            if(file_content.content != NULL) {
+                if(write_file(file_name, &file_content) != 0) {
+                    exit(1);
+                }
                 n++;
-                free(content);
+                free(file_content.content);
             }
-            content = read_file(file_name);
-            last_mod = mod;
+            if(read_file(file_name, &file_content) != 0) {
+                exit(1);
+            }
+            last_mod = file_content.mod;
         }
         int sleepTime = remainingTime < interval ? remainingTime : interval;
         sleep(sleepTime);
         remainingTime -= sleepTime;
     }
-    if(content != NULL)
-        free(content);
+    if(file_content.content != NULL)
+        free(file_content.content);
     pid_t pid = getpid();
     printf("Process %d created %d copies of file %s and is finished\n", pid, n, file_name);
     exit(0);
@@ -166,6 +178,8 @@ int observe_restricted(const char *file_name, int interval, int lifespan, Mode m
     int pid;
     if((pid = fork()) == 0) {
         struct rlimit cpu_rlimit, memory_rlimit;
+        cpu_rlimit.rlim_cur = (rlim_t) cpu_limit;
+        memory_rlimit.rlim_cur = (rlim_t) ((long long) memory_limit) * 1000000LL;
         cpu_rlimit.rlim_max = (rlim_t) cpu_limit;
         memory_rlimit.rlim_max = (rlim_t) ((long long) memory_limit) * 1000000LL;
         setrlimit(RLIMIT_AS, &memory_rlimit);
