@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <wait.h>
+#include <sys/resource.h>
 
 child** create_children_table(size_t size) {
     return calloc(sizeof(child*), size + 1);
@@ -40,9 +42,11 @@ child* get_child_by_pid(child **children, pid_t pid) {
 }
 
 void start_process(child *child) {
-    if(child->status == STOPPED) {
-        kill(child->pid, SIGCONT);
-        child->status = RUNNING;
+    if(child != NULL && child->status == RUNNING) {
+        if(kill(child->pid, 0) == 0) {
+            kill(child->pid, SIGCONT);
+            child->status = STOPPED;
+        }
     }
 }
 
@@ -55,9 +59,11 @@ void start_all_processes(child **children) {
 }
 
 void stop_process(child *child) {
-    if(child->status == RUNNING) {
-        kill(child->pid, SIGTSTP);
-        child->status = STOPPED;
+    if(child != NULL && child->status == RUNNING) {
+        if(kill(child->pid, 0) == 0) {
+            kill(child->pid, SIGTSTP);
+            child->status = STOPPED;
+        }
     }
 }
 
@@ -69,21 +75,28 @@ void stop_all_processes(child **children) {
     }
 }
 
+double to_milis(struct timeval tm) {
+    return ((double) tm.tv_usec)/1000.0 + tm.tv_sec*1000.0;
+}
+
 void end_processes(child **children) {
-    /* int i = 0;
     struct rusage usage;
     double sys_sum = 0;
     double usr_sum = 0;
-    while(pids[i] != -1){
-        waitpid(pids[i], &status, 0);
+    int status;
+    int i = 0;
+    while(children[i] != NULL){
+        kill(children[i]->pid, SIGINT);
+        waitpid(children[i]->pid, &status, 0);
         getrusage(RUSAGE_CHILDREN, &usage);
         printf("STATUS of %d is %d usage: maxrss %ld utime: %.3f stime: %.3f\n", i,
                 status, usage.ru_maxrss, to_milis(usage.ru_utime) - usr_sum,
                to_milis(usage.ru_stime) - sys_sum);
         sys_sum += to_milis(usage.ru_stime);
         usr_sum += to_milis(usage.ru_utime);
+        children[i] = ENDED;
         i++;
-    } */
+    }
 }
 
 void clear_children(child **children) {

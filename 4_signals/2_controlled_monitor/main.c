@@ -92,10 +92,6 @@ child** get_and_observe_files(const char *files_list) {
     return children;
 }
 
-double to_milis(struct timeval tm) {
-    return ((double) tm.tv_usec)/1000.0 + tm.tv_sec*1000.0;
-}
-
 int main(int argc, char **argv) {
     if(argc < 3 || argc == 4) {
         fprintf(stderr, "Wrong arguments count");

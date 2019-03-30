@@ -95,7 +95,7 @@ void observe_file_archive(const char *file_name, int interval){
     while(1) {
         file_content.mod = get_modification_time(file_name);
         if(file_content.mod != last_mod) {
-            fflush(stdout);
+            printf("Making copy of %s\n", file_name);
             if(file_content.content != NULL) {
                 if(write_file(file_name, &file_content) != 0) {
                     exit(1);
