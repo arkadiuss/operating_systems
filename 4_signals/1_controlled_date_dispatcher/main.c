@@ -30,12 +30,14 @@ void show_cur_date(){
 }
 
 void wait_for_signal(){
+    /* ALTERNATIVE SOLUTION
     sigset_t mask;
     sigemptyset(&mask);
     sigfillset(&mask);
     sigdelset(&mask, SIGINT);
     sigdelset(&mask, SIGTSTP);
-    sigsuspend(&mask);
+    sigsuspend(&mask);*/
+    pause();
 }
 
 int main() {
