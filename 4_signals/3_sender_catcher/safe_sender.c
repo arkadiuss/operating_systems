@@ -5,28 +5,27 @@
 #include <unistd.h>
 #include "common.h"
 
+int usr1_confirmation_received = 0;
+int usr1_resp_count = 0;
+
 void send_signals(pid_t pid, int signals_num, Mode mode){
     union sigval sv;
     sv.sival_int = 0;
     while(signals_num--) {
         send_by_mode(pid, SIGUSR1, mode, sv);
+        while(!usr1_confirmation_received) pause();
+        usr1_confirmation_received = 0;
     }
     send_by_mode(pid, SIGUSR2, mode, sv);
 }
 
-int usr2_resp_received = 0;
-int usr1_resp_count = 0;
-int max_usr1_num_received = 0;
-
 void handle_usr1(int sig, siginfo_t *info, void *context) {
-    if(info->si_code & SI_QUEUE){
-        max_usr1_num_received = info->si_value.sival_int;
-    }
+    usr1_confirmation_received = 1;
     usr1_resp_count++;
 }
 
 void handle_usr2(int sig) {
-    usr2_resp_received = 1;
+
 }
 
 int main(int argc, char **argv) {
@@ -52,11 +51,11 @@ int main(int argc, char **argv) {
     sigaction(SIGRTMIN + 2, &act2, NULL);
 
     send_signals(catcher_pid, signals_number, mode);
-
-    while(!usr2_resp_received){ pause(); }
+    printf("Received %d confirmations\n", usr1_resp_count);
+    /* while(!usr2_resp_received){ pause(); }
     if(max_usr1_num_received != 0)
         printf("Received %d as a response with max value %d\n", usr1_resp_count, max_usr1_num_received);
     else
-        printf("Received %d as a response\n", usr1_resp_count);
+        printf("Received %d as a response\n", usr1_resp_count); */
     return 0;
 }

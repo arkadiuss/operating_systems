@@ -53,6 +53,13 @@ Mode get_mode(char *mode){
     }
 }
 
+void set_def_sigaction(struct sigaction* act){
+    sigfillset (&act->sa_mask);
+    sigdelset(&act->sa_mask, SIGUSR1);
+    sigdelset(&act->sa_mask, SIGUSR2);
+    act->sa_flags = 0;
+}
+
 void send_by_mode(pid_t pid, int sig, Mode mode, union sigval data) {
     switch (mode){
         case KILL:

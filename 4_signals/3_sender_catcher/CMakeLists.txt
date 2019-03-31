@@ -5,3 +5,5 @@ set(CMAKE_C_STANDARD 99)
 
 add_executable(catcher catcher.c common.c common.h)
 add_executable(sender sender.c common.c common.h)
+add_executable(safe_sender safe_sender.c common.c common.h)
+add_executable(safe_catcher safe_catcher.c common.c common.h)

@@ -7,17 +7,19 @@
 int usr2_received = 0;
 int usr1_count = 0;
 static volatile pid_t sender_pid = -1;
+Mode mode;
 
 void handle_usr1(int sig, siginfo_t *info, void *context){
     usr1_count++;
     sender_pid = info->si_pid;
+    send_by_mode(sender_pid, SIGUSR1, mode, info->si_value);
 }
 
 void handle_usr2(int sig){
     usr2_received = 1;
 }
 
-void send_signals(Mode mode){
+void send_signals(){
     union sigval sv;
     sv.sival_int = 0;
     printf("Sending back to: %d\n", sender_pid);
@@ -44,12 +46,12 @@ int main(int argc, char **argv) {
     act2.sa_handler = handle_usr2;
     sigaction(SIGUSR2, &act2, NULL);
     sigaction(SIGRTMIN + 2, &act2, NULL);
-    Mode mode = get_mode(argv[1]);
+    mode = get_mode(argv[1]);
     while(!usr2_received) { pause(); }
     printf("Received %d usr1 signals\n", usr1_count);
-    if(sender_pid != -1)
-        send_signals(mode);
+    /*if(sender_pid != -1)
+        //send_signals();
     else
-        fprintf(stderr, "No sender pid\n");
+        fprintf(stderr, "No sender pid\n");*/
     return 0;
 }
