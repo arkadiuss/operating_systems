@@ -45,7 +45,7 @@ void start_process(child *child) {
     if(child != NULL && child->status == RUNNING) {
         if(kill(child->pid, 0) == 0) {
             kill(child->pid, SIGCONT);
-            child->status = STOPPED;
+            child->status = RUNNING;
         }
     }
 }
@@ -94,7 +94,7 @@ void end_processes(child **children) {
                to_milis(usage.ru_stime) - sys_sum);
         sys_sum += to_milis(usage.ru_stime);
         usr_sum += to_milis(usage.ru_utime);
-        children[i] = ENDED;
+        children[i]->status = ENDED;
         i++;
     }
 }
