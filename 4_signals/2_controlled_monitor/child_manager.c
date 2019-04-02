@@ -1,7 +1,7 @@
 //
 // Created by arkadius on 30.03.19.
 //
-
+#define _XOPEN_SOURCE 500
 #include "child_manager.h"
 #include <stdio.h>
 #include <string.h>
@@ -42,7 +42,7 @@ child* get_child_by_pid(child **children, pid_t pid) {
 }
 
 void start_process(child *child) {
-    if(child != NULL && child->status == RUNNING) {
+    if(child != NULL && child->status == STOPPED) {
         if(kill(child->pid, 0) == 0) {
             kill(child->pid, SIGCONT);
             child->status = RUNNING;

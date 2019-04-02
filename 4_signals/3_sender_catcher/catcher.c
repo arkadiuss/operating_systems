@@ -1,7 +1,9 @@
+#define _XOPEN_SOURCE 500
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
 #include "common.h"
 
 int usr2_received = 0;

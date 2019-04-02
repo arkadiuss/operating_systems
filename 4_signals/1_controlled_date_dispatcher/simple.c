@@ -42,9 +42,9 @@ void wait_for_signal(){
 
 int main() {
     signal(SIGINT, handle_int);
-    struct sigaction action;
-    action.sa_handler = handle_stp;
-    sigaction(SIGTSTP, &action, NULL);
+    struct sigaction act;
+    act.sa_handler = handle_stp;
+    sigaction(SIGTSTP, &act, NULL);
     while(1) {
         if(blocked) {
             wait_for_signal();
