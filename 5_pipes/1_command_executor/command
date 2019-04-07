@@ -1,0 +1,1 @@
+cat main.c | grep include | awk '{print $2}' | grep -o "\<.*\>"
