@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/types.h>
 
 typedef enum {
     KILL = 0, QUEUE = 1, RT = 2

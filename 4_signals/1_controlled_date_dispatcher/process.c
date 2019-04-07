@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 int child_started = 0;
 pid_t child_pid = -1;

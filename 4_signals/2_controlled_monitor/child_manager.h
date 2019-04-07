@@ -6,6 +6,7 @@
 #define CONTROLLEDMONITOR_CHILD_MANAGER_H
 
 #include <stdlib.h>
+#include <sys/types.h>
 
 typedef enum {
     RUNNING = 0, STOPPED = 1, ENDED = 2

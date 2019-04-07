@@ -1,7 +1,7 @@
 //
 // Created by arkadius on 30.03.19.
 //
-
+#define _XOPEN_SOURCE 500
 #include "common.h"
 #include <stdio.h>
 #include <string.h>
