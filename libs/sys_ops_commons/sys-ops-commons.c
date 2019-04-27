@@ -57,3 +57,8 @@ int is_integer(char* str){
     }
     return 1;
 }
+
+void show_error_and_exit(const char *err, int exit_code) {
+    fprintf(stderr, "Error: %s", err);
+    exit(exit_code);
+}
