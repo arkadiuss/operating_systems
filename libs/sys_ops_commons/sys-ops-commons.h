@@ -7,4 +7,5 @@ size_t get_file_size(const char *file_name);
 size_t read_whole_file(const char *file_name, char *buffer);
 int is_integer(char *str);
 void show_error_and_exit(const char *err, int exit_code);
+int split_to_arr(char **args, char *msg);
 #endif

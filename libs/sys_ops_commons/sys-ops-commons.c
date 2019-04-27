@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 void validate_argc(int argc, int required) {
     if(argc < required + 1){
@@ -61,4 +62,16 @@ int is_integer(char* str){
 void show_error_and_exit(const char *err, int exit_code) {
     fprintf(stderr, "Error: %s", err);
     exit(exit_code);
+}
+
+int split_to_arr(char **args, char *msg) {
+    char *str;
+    str = strtok(msg, " ");
+    int c = 0;
+    while(str != NULL) {
+        (*args++) = strdup(str);
+        str = strtok(NULL, " ");
+        c++;
+    }
+    return c;
 }

@@ -5,15 +5,17 @@
 #ifndef COMMUNICATOR_COMMUNICATOR_H
 #define COMMUNICATOR_COMMUNICATOR_H
 
-const int QID = 234321;
-
+const int QKEY = 23321;
+#define MSG_SIZE 30
+#define MAX_CLIENTS_CNT 100
+const int TYPES_CNT = 5;
 enum message_types {
-    INIT = 0L, MSG = 1L
+    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, MSG = 5L
 };
 
 typedef struct msg {
     long type;
-    char data[20];
+    char data[MSG_SIZE];
 } msg;
 
 msg generate_init(int qid) {
@@ -22,5 +24,9 @@ msg generate_init(int qid) {
     msg.type = INIT;
     return msg;
 }
+
+typedef struct client {
+    int qid;
+} client;
 
 #endif //COMMUNICATOR_COMMUNICATOR_H
