@@ -46,7 +46,7 @@ int init_queues(){
 void send_echo(const char *str){
     msg msg;
     msg.type = ECHO;
-    strcpy(msg.data, str);
+    sprintf(msg.data, "%d %s", client_id, str);
     if(msgsnd(msqid, &msg, MSG_SIZE, 0) < 0){
         fprintf(stderr, "Unable to send echo message\n");
         return;
@@ -60,15 +60,15 @@ void send_echo(const char *str){
 
 void handle_commands(){
     char command[MSG_SIZE];
+    char str[MSG_SIZE];
     while(1) {
         scanf("%s", command);
-        char* args[3];
-        split_to_arr(args, command);
-        if(strstr(args[0], "ECHO")){
-            send_echo(args[1]);
-        } else if(strstr(args[0], "LIST")){
+        if(strstr(command, "ECHO")){
+            scanf("%s", str);
+            send_echo(str);
+        } else if(strstr(command, "LIST")){
             //msg.type = LIST;
-        } else if (strstr(args[0], "FRIENDS")) {
+        } else if (strstr(command, "FRIENDS")) {
             //msg.type = FRIENDS;
         }
 

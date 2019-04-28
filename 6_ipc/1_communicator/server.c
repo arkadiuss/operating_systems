@@ -25,11 +25,14 @@ void init_client(int qid) {
     printf("Client %d initialized successfully\n", cur_client-1);
 }
 
-void respond_to_echo(char *str) {
-//    if(msgsnd(msqid, &msg, MSG_SIZE, 0) < 0){
-//        fprintf(stderr, "Unable to send echo message\n");
-//        return;
-//    }
+void respond_to_echo(int client_id, char *str) {
+    msg msg;
+    msg.type = CTRL;
+    strcpy(msg.data, str);
+    if(msgsnd(clients[client_id].qid, &msg, MSG_SIZE, 0) < 0){
+        fprintf(stderr, "Unable to send echo message\n");
+        return;
+    }
 }
 
 void handle_msg_by_type(msg msg) {
@@ -43,7 +46,7 @@ void handle_msg_by_type(msg msg) {
             init_client(atoi(args[1]));
             break;
         case ECHO:
-            respond_to_echo(args[1]);
+            respond_to_echo(atoi(args[0]), args[1]);
             break;
         default:
             fprintf(stderr, "Unrecognized message type");
