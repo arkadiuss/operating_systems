@@ -19,7 +19,7 @@ typedef struct msg {
 
 const int TYPES_CNT = 5;
 enum message_types {
-    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L
+    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L, TO_ONE = 6L
 };
 
 #ifdef SV // queues from System V

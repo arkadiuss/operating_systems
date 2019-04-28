@@ -42,6 +42,16 @@ void respond_to_echo(int client_id, char *str) {
     }
 }
 
+void send_message_to_one(int sender_id, int receiver_id, const char *content){
+    msg msg;
+    msg.type = MESSAGE;
+    sprintf(msg.data, "From %d: %s", sender_id, content);
+    if(snd_msg(clients[receiver_id].qid, &msg) < 0){
+        fprintf(stderr, "Unable to send private message\n");
+        return;
+    }
+}
+
 void handle_msg_by_type(msg msg) {
     printf("Received message %s\n", msg.data);
     char* args[3];
@@ -54,6 +64,9 @@ void handle_msg_by_type(msg msg) {
             break;
         case ECHO:
             respond_to_echo(atoi(args[0]), args[1]);
+            break;
+        case TO_ONE:
+            send_message_to_one(atoi(args[0]), atoi(args[1]), args[2]);
             break;
         default:
             fprintf(stderr, "Unrecognized message type");

@@ -63,6 +63,16 @@ void send_echo(const char *str){
     }
 }
 
+void send_message(int id, const char *str){
+    msg msg;
+    msg.type = TO_ONE;
+    sprintf(msg.data, "%d %d %s", client_id, id, str);
+    if(snd_msg(msqid, &msg) < 0){
+        fprintf(stderr, "Unable to send private message\n");
+        return;
+    }
+}
+
 void handle_commands(){
     char command[MSG_SIZE];
     char str[MSG_SIZE];
@@ -71,6 +81,11 @@ void handle_commands(){
         if(strstr(command, "ECHO")){
             scanf("%s", str);
             send_echo(str);
+        } else if(strstr(command, "2ONE")){
+            int id;
+            scanf("%d", &id);
+            scanf("%s", str);
+            send_message(id, str);
         } else if(strstr(command, "LIST")){
             //msg.type = LIST;
         } else if (strstr(command, "FRIENDS")) {
