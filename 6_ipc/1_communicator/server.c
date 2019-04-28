@@ -15,7 +15,7 @@ void init_client(int qid) {
     printf("Initializing client with id %d, qid %d\n", cur_client, qid);
     clients[cur_client].qid = qid;
     msg msg;
-    msg.type = 1;
+    msg.type = CTRL;
     sprintf(msg.data, "%d", cur_client);
     if(msgsnd(qid, &msg, MSG_SIZE, 0) < 0){
         fprintf(stderr, "Unable to send initializing message: %s", strerror(errno));
@@ -23,6 +23,13 @@ void init_client(int qid) {
     }
     cur_client++;
     printf("Client %d initialized successfully\n", cur_client-1);
+}
+
+void respond_to_echo(char *str) {
+//    if(msgsnd(msqid, &msg, MSG_SIZE, 0) < 0){
+//        fprintf(stderr, "Unable to send echo message\n");
+//        return;
+//    }
 }
 
 void handle_msg_by_type(msg msg) {
@@ -33,10 +40,10 @@ void handle_msg_by_type(msg msg) {
     switch (msg.type){
         case INIT:
             //if(!is_integer(args[0]))
-            init_client(atoi(args[0]));
+            init_client(atoi(args[1]));
             break;
-        case LIST:
-
+        case ECHO:
+            respond_to_echo(args[1]);
             break;
         default:
             fprintf(stderr, "Unrecognized message type");
@@ -54,7 +61,7 @@ int main() {
 
     while(1) {
         msg received_msg;
-        if(msgrcv(msqid, &received_msg, MSG_SIZE, 0, 0) < 0) { //-types count to specify priority of messages
+        if(msgrcv(msqid, &received_msg, MSG_SIZE, -TYPES_CNT, 0) < 0) { //-types count to specify priority of messages
             fprintf(stderr, "Error while receiving");
         }
         handle_msg_by_type(received_msg);

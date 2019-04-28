@@ -5,12 +5,16 @@
 #ifndef COMMUNICATOR_COMMUNICATOR_H
 #define COMMUNICATOR_COMMUNICATOR_H
 
-const int QKEY = 23321;
+const int QKEY = 23312;
 #define MSG_SIZE 30
 #define MAX_CLIENTS_CNT 100
 const int TYPES_CNT = 5;
 enum message_types {
-    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, MSG = 5L
+    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L
+};
+
+enum client_message_types {
+    CTRL = 1L, MESSAGE = 2L
 };
 
 typedef struct msg {
