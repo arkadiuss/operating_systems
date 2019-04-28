@@ -8,15 +8,16 @@
 int client_id;
 int msqid;
 int client_qid;
+int client_msg_qid;
 
 int generate_number(){
     pid_t pid = getpid();
     return 123*pid + 1000;
 }
 
-msg generate_init(int client_key) {
+msg generate_init(int client_key, int client_msg_key) {
     msg msg;
-    sprintf(msg.data, "INIT %d", client_key);
+    sprintf(msg.data, "INIT %d %d", client_key, client_msg_key);
     msg.type = INIT;
     return msg;
 }
@@ -31,7 +32,13 @@ int init_queues(){
     if((client_qid = create_queue(client_key, 1)) < 0){
         show_error_and_exit("Unable to create children queue", 1);
     }
-    msg init_msg = generate_init(client_key);
+
+    int client_msg_key = client_key + 1;
+    if((client_msg_qid = create_queue(client_msg_key, 1)) < 0){
+        show_error_and_exit("Unable to create children message queue", 1);
+    }
+
+    msg init_msg = generate_init(client_key, client_msg_key);
     if(snd_msg(msqid, &init_msg) < 0){
         show_error_and_exit("Unable to send message", 1);
     }
@@ -42,7 +49,7 @@ int init_queues(){
     }
     //TODO: validation
     client_id = atoi(received_message.data);
-    printf("Connected to server! id: %d", client_id);
+    printf("Connected to server! id: %d\n", client_id);
 
 }
 
@@ -54,11 +61,6 @@ void send_echo(const char *str){
         fprintf(stderr, "Unable to send echo message\n");
         return;
     }
-    if(rcv_msg(client_qid, &msg, CTRL) < 0){
-        fprintf(stderr, "Unable to receive echo message\n");
-        return;
-    }
-    printf("Server response: %s", msg.data);
 }
 
 void handle_commands(){
@@ -89,11 +91,11 @@ void listen_to_messages(){
 }
 
 int main() {
-    init_queues(&msqid, &client_qid);
+    init_queues();
     if(fork() == 0){
-        listen_to_messages(msqid, client_qid);
+        listen_to_messages();
     } else {
-        handle_commands(msqid, client_qid);
+        handle_commands();
     }
 
     return 0;

@@ -8,14 +8,19 @@
 client clients[MAX_CLIENTS_CNT];
 int cur_client = 0;
 
-void init_client(int client_key) {
+void init_client(int client_key, int client_msg_key) {
     printf("Initializing client with id %d, key %d\n", cur_client, client_key);
-    int qid;
+    int qid, msg_qid;
     if((qid = create_queue(client_key, 0)) < 0){
         fprintf(stderr, "Unable to open child queue");
         return;
     }
+    if((msg_qid = create_queue(client_msg_key, 0)) < 0){
+        fprintf(stderr, "Unable to open child queue");
+        return;
+    }
     clients[cur_client].qid = qid;
+    clients[cur_client].msg_qid = msg_qid;
     msg msg;
     msg.type = CTRL;
     sprintf(msg.data, "%d", cur_client);
@@ -45,7 +50,7 @@ void handle_msg_by_type(msg msg) {
     switch (msg.type){
         case INIT:
             //if(!is_integer(args[0]))
-            init_client(atoi(args[1]));
+            init_client(atoi(args[1]), atoi(args[2]));
             break;
         case ECHO:
             respond_to_echo(atoi(args[0]), args[1]);

@@ -74,6 +74,7 @@ enum client_message_types {
 
 typedef struct client {
     int qid;
+    int msg_qid;
 } client;
 
 #endif //COMMUNICATOR_COMMUNICATOR_H
