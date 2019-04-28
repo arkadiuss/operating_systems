@@ -8,8 +8,13 @@
 client clients[MAX_CLIENTS_CNT];
 int cur_client = 0;
 
-void init_client(int qid) {
-    printf("Initializing client with id %d, qid %d\n", cur_client, qid);
+void init_client(int client_key) {
+    printf("Initializing client with id %d, key %d\n", cur_client, client_key);
+    int qid;
+    if((qid = create_queue(client_key, 0)) < 0){
+        fprintf(stderr, "Unable to open child queue");
+        return;
+    }
     clients[cur_client].qid = qid;
     msg msg;
     msg.type = CTRL;
@@ -19,7 +24,7 @@ void init_client(int qid) {
         return;
     }
     cur_client++;
-    printf("Client %d initialized successfully\n", cur_client-1);
+    printf("Client %d initialized successfully, qid: %d\n", cur_client-1, qid);
 }
 
 void respond_to_echo(int client_id, char *str) {

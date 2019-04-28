@@ -60,7 +60,7 @@ int is_integer(char* str){
 }
 
 void show_error_and_exit(const char *err, int exit_code) {
-    fprintf(stderr, "Error: %s", err);
+    fprintf(stderr, "Error: %s Strerr: %s", err, strerror(errno));
     exit(exit_code);
 }
 

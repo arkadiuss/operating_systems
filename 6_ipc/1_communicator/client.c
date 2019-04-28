@@ -14,6 +14,13 @@ int generate_number(){
     return 123*pid + 1000;
 }
 
+msg generate_init(int client_key) {
+    msg msg;
+    sprintf(msg.data, "INIT %d", client_key);
+    msg.type = INIT;
+    return msg;
+}
+
 int init_queues(){
     if((msqid = create_queue(QKEY, 0)) < 0){
         show_error_and_exit("Unable to create queue", 1);
@@ -24,11 +31,10 @@ int init_queues(){
     if((client_qid = create_queue(client_key, 1)) < 0){
         show_error_and_exit("Unable to create children queue", 1);
     }
-    msg init_msg = generate_init(client_qid);
+    msg init_msg = generate_init(client_key);
     if(snd_msg(msqid, &init_msg) < 0){
         show_error_and_exit("Unable to send message", 1);
     }
-    printf("Created\n");
 
     msg received_message;
     if(rcv_msg(client_qid, &received_message, CTRL) < 0){

@@ -17,6 +17,11 @@ typedef struct msg {
 } msg;
 
 
+const int TYPES_CNT = 5;
+enum message_types {
+    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L
+};
+
 #ifdef SV // queues from System V
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -33,32 +38,39 @@ int rcv_msg(int qid, msg *msg, int type) {
 #endif
 #ifdef PX // queues from POSIX
 #include <fcntl.h>
-int create_queue(){
+#include <sys/stat.h>
+#include <mqueue.h>
+#include <string.h>
 
+int create_queue(int key, int flag){
+    char name[11];
+    sprintf(name, "/q%d", key);
+    struct mq_attr attr;
+    memset(&attr, 0, sizeof attr);
+    attr.mq_msgsize = MSG_SIZE;
+    attr.mq_flags = 0;
+    attr.mq_maxmsg = 9;
+    return mq_open(name, O_RDWR | (flag == 1 ? O_CREAT : 0), 0664, &attr);
 }
-int snd_msg() {
-
+int snd_msg(int qid, msg *msg) {
+    int prt = TYPES_CNT - msg->type + 1;
+    return mq_send(qid, msg->data, MSG_SIZE, prt);
 }
-int rcv_msg() {
-
+int rcv_msg(int qid, msg *msg, int type) {
+    char buffer[MSG_SIZE];
+    int prt;
+    int res = (int) mq_receive(qid, buffer, MSG_SIZE, &prt);
+    msg->type = TYPES_CNT - prt + 1;
+    strcpy(msg->data, buffer);
+    return res;
 }
 #endif
 
-const int TYPES_CNT = 5;
-enum message_types {
-    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L
-};
+
 
 enum client_message_types {
     CTRL = 1L, MESSAGE = 2L
 };
-
-msg generate_init(int qid) {
-    msg msg;
-    sprintf(msg.data, "INIT %d", qid);
-    msg.type = INIT;
-    return msg;
-}
 
 typedef struct client {
     int qid;
