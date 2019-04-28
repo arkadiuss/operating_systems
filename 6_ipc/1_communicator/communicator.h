@@ -17,7 +17,7 @@ typedef struct msg {
 } msg;
 
 
-const int TYPES_CNT = 5;
+const int TYPES_CNT = 6;
 enum message_types {
     STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L, TO_ONE = 6L
 };

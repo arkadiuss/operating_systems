@@ -53,7 +53,7 @@ void send_message_to_one(int sender_id, int receiver_id, const char *content){
 }
 
 void handle_msg_by_type(msg msg) {
-    printf("Received message %s\n", msg.data);
+    printf("Received message %ld %s\n", msg.type, msg.data);
     char* args[3];
     int argc = split_to_arr(args, msg.data);
     //TODO: ARGS VALIDATION

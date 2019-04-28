@@ -98,7 +98,7 @@ void handle_commands(){
 void listen_to_messages(){
     msg received_msg;
     while(1){
-        if(rcv_msg(client_qid, &received_msg, MESSAGE) < 0){
+        if(rcv_msg(client_qid, &received_msg, 0) < 0){
             fprintf(stderr, "Unable to read message\n");
         }
         printf("I've received a message! MESSAGE: %s\n", received_msg.data);
