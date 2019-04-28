@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "communicator.h"
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <sys-ops-commons.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,23 +15,23 @@ int generate_number(){
 }
 
 int init_queues(){
-    if((msqid = msgget(QKEY, 0666)) < 0){
+    if((msqid = create_queue(QKEY, 0)) < 0){
         show_error_and_exit("Unable to create queue", 1);
     }
     printf("Client qid %d\n", msqid);
 
     int client_key = generate_number();
-    if((client_qid = msgget(client_key, 0666 | IPC_CREAT)) < 0){
+    if((client_qid = create_queue(client_key, 1)) < 0){
         show_error_and_exit("Unable to create children queue", 1);
     }
-
     msg init_msg = generate_init(client_qid);
-    if(msgsnd(msqid, &init_msg, MSG_SIZE, 0) < 0){
+    if(snd_msg(msqid, &init_msg) < 0){
         show_error_and_exit("Unable to send message", 1);
     }
+    printf("Created\n");
 
     msg received_message;
-    if(msgrcv(client_qid, &received_message, MSG_SIZE, CTRL, 0) < 0){
+    if(rcv_msg(client_qid, &received_message, CTRL) < 0){
         show_error_and_exit("Unable to receive id", 1);
     }
     //TODO: validation
@@ -47,11 +44,11 @@ void send_echo(const char *str){
     msg msg;
     msg.type = ECHO;
     sprintf(msg.data, "%d %s", client_id, str);
-    if(msgsnd(msqid, &msg, MSG_SIZE, 0) < 0){
+    if(snd_msg(msqid, &msg) < 0){
         fprintf(stderr, "Unable to send echo message\n");
         return;
     }
-    if(msgrcv(client_qid, &msg, MSG_SIZE, CTRL, 0) < 0){
+    if(rcv_msg(client_qid, &msg, CTRL) < 0){
         fprintf(stderr, "Unable to receive echo message\n");
         return;
     }
@@ -78,7 +75,7 @@ void handle_commands(){
 void listen_to_messages(){
     msg received_msg;
     while(1){
-        if(msgrcv(client_qid, &received_msg, MSG_SIZE, MESSAGE, 0) < 0){
+        if(rcv_msg(client_qid, &received_msg, MESSAGE) < 0){
             fprintf(stderr, "Unable to read message\n");
         }
         printf("I've received a message! MESSAGE: %s\n", received_msg.data);

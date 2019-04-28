@@ -1,8 +1,5 @@
 #include <stdio.h>
 #include "communicator.h"
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <sys-ops-commons.h>
 #include <errno.h>
 #include <string.h>
@@ -17,7 +14,7 @@ void init_client(int qid) {
     msg msg;
     msg.type = CTRL;
     sprintf(msg.data, "%d", cur_client);
-    if(msgsnd(qid, &msg, MSG_SIZE, 0) < 0){
+    if(snd_msg(qid, &msg) < 0){
         fprintf(stderr, "Unable to send initializing message: %s", strerror(errno));
         return;
     }
@@ -29,7 +26,7 @@ void respond_to_echo(int client_id, char *str) {
     msg msg;
     msg.type = CTRL;
     strcpy(msg.data, str);
-    if(msgsnd(clients[client_id].qid, &msg, MSG_SIZE, 0) < 0){
+    if(snd_msg(clients[client_id].qid, &msg) < 0){
         fprintf(stderr, "Unable to send echo message\n");
         return;
     }
@@ -56,7 +53,7 @@ void handle_msg_by_type(msg msg) {
 int main() {
     int msqid;
 
-    if((msqid = msgget(QKEY, 0666 | IPC_CREAT)) < 0){
+    if((msqid = create_queue(QKEY, 1)) < 0){
         show_error_and_exit("Unable to create queue", 1);
     }
 
@@ -64,7 +61,7 @@ int main() {
 
     while(1) {
         msg received_msg;
-        if(msgrcv(msqid, &received_msg, MSG_SIZE, -TYPES_CNT, 0) < 0) { //-types count to specify priority of messages
+        if(rcv_msg(msqid, &received_msg, -TYPES_CNT) < 0) { //-types count to specify priority of messages
             fprintf(stderr, "Error while receiving");
         }
         handle_msg_by_type(received_msg);

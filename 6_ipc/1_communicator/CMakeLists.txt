@@ -8,7 +8,7 @@ set(commons ../../libs/sys_ops_commons)
 
 include_directories(${commons})
 add_library(sys_ops_commons ${commons}/sys-ops-commons.c)
-add_definitions(-Wall -std=c99)
+add_definitions(-Wall -std=c99 -DSV)
 add_executable(${name_server} server.c communicator.h)
 add_executable(${name_client} client.c communicator.h)
 target_link_libraries(${name_server} sys_ops_commons)
