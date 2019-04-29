@@ -172,7 +172,6 @@ void handle_commands(){
             stop_client();
             break;
         }
-        sleep(1);
     }
 }
 

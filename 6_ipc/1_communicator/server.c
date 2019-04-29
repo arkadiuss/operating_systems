@@ -215,7 +215,6 @@ int main() {
             fprintf(stderr, "Error while receiving\n");
         }
         handle_msg_by_type(received_msg);
-        sleep(2);
     }
 }
 
