@@ -52,6 +52,13 @@ void send_message_to_one(int sender_id, int receiver_id, const char *content){
     }
 }
 
+void send_broadcast_message(int sender_id, const char *content){
+    for(int i = 0; i < cur_client; i++){
+        if(i != sender_id)
+            send_message_to_one(sender_id, i, content);
+    }
+}
+
 void handle_msg_by_type(msg msg) {
     printf("Received message %ld %s\n", msg.type, msg.data);
     char* args[3];
@@ -68,6 +75,8 @@ void handle_msg_by_type(msg msg) {
         case TO_ONE:
             send_message_to_one(atoi(args[0]), atoi(args[1]), args[2]);
             break;
+        case TO_ALL:
+            send_broadcast_message(atoi(args[0]), args[1]);
         default:
             fprintf(stderr, "Unrecognized message type");
     }

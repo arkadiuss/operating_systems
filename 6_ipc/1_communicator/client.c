@@ -73,6 +73,16 @@ void send_message(int id, const char *str){
     }
 }
 
+void send_broadcast_message(const char *str){
+    msg msg;
+    msg.type = TO_ALL;
+    sprintf(msg.data, "%d %s", client_id, str);
+    if(snd_msg(msqid, &msg) < 0){
+        fprintf(stderr, "Unable to send braodcast message\n");
+        return;
+    }
+}
+
 void handle_commands(){
     char command[MSG_SIZE];
     char str[MSG_SIZE];
@@ -86,8 +96,9 @@ void handle_commands(){
             scanf("%d", &id);
             scanf("%s", str);
             send_message(id, str);
-        } else if(strstr(command, "LIST")){
-            //msg.type = LIST;
+        } else if(strstr(command, "2ALL")){
+            scanf("%s", str);
+            send_broadcast_message(str);
         } else if (strstr(command, "FRIENDS")) {
             //msg.type = FRIENDS;
         }
