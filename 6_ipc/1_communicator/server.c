@@ -77,6 +77,13 @@ void send_message_to_one(int sender_id, int receiver_id, const char *content){
     send_message(receiver_id, &msg);
 }
 
+void send_message_to_friends(int sender_id, const char *content){
+    for(int i = 0; i < cur_client; i++){
+        if(i != sender_id && clients[sender_id].friends[i])
+            send_message_to_one(sender_id, i, content);
+    }
+}
+
 void send_broadcast_message(int sender_id, const char *content){
     for(int i = 0; i < cur_client; i++){
         if(i != sender_id)
@@ -158,6 +165,9 @@ void handle_msg_by_type(msg msg) {
             break;
         case TO_ALL:
             send_broadcast_message(atoi(args[0]), args[1]);
+            break;
+        case TO_FRIENDS:
+            send_message_to_friends(atoi(args[0]), args[1]);
             break;
         case STOP:
             disconnect_client(atoi(args[0]));

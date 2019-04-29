@@ -89,7 +89,17 @@ void send_broadcast_message(const char *str){
     msg.type = TO_ALL;
     sprintf(msg.data, "%d %s", client_id, str);
     if(snd_msg(msqid, &msg) < 0){
-        fprintf(stderr, "Unable to send braodcast message\n");
+        fprintf(stderr, "Unable to send broadcast message\n");
+        return;
+    }
+}
+
+void send_message_to_friends(const char *str){
+    msg msg;
+    msg.type = TO_FRIENDS;
+    sprintf(msg.data, "%d %s", client_id, str);
+    if(snd_msg(msqid, &msg) < 0){
+        fprintf(stderr, "Unable to send friends message\n");
         return;
     }
 }
@@ -136,10 +146,8 @@ void handle_commands(){
     char str[MSG_SIZE];
     while(1) {
         scanf("%s", command);
-        printf("COMMAND %s\n", command);
         if(strcmp(command, "ECHO") == 0){
             scanf("%s", str);
-            printf("asdsa %s\n", str);
             send_echo(str);
         } else if(strcmp(command, "LIST") == 0){
             send_list_request();
@@ -157,6 +165,9 @@ void handle_commands(){
         } else if(strcmp(command, "2ALL") == 0){
             scanf("%s", str);
             send_broadcast_message(str);
+        } else if(strcmp(command, "2FRIENDS") == 0){
+            scanf("%s", str);
+            send_message_to_friends(str);
         } else if (strcmp(command, "STOP") == 0) {
             stop_client();
             break;

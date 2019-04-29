@@ -17,9 +17,10 @@ typedef struct msg {
 } msg;
 
 
-const int TYPES_CNT = 9;
+const int TYPES_CNT = 10;
 enum message_types {
-    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L, TO_ONE = 6L, TO_ALL = 7L, ADD = 8L, REMOVE = 9L
+    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L, TO_ONE = 6L, TO_ALL = 7L, TO_FRIENDS = 8L,
+    ADD = 9L, REMOVE = 10L
 };
 
 #ifdef SV // queues from System V
