@@ -4,11 +4,14 @@
 #include <sys-ops-commons.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 int client_id;
 int msqid;
 int client_qid;
 int client_msg_qid;
+
+pid_t rec_pid = 0;
 
 int generate_number(){
     pid_t pid = getpid();
@@ -83,6 +86,23 @@ void send_broadcast_message(const char *str){
     }
 }
 
+void close_queues(){
+    close_queue(msqid);
+    close_queue(client_qid);
+    close_queue(client_msg_qid);
+}
+
+void stop_client(){
+    msg msg;
+    msg.type = STOP;
+    sprintf(msg.data, "%d", client_id);
+    if(snd_msg(msqid, &msg) < 0){
+        fprintf(stderr, "Unable to send stop message\n");
+        return;
+    }
+    close_queues();
+}
+
 void handle_commands(){
     char command[MSG_SIZE];
     char str[MSG_SIZE];
@@ -99,8 +119,9 @@ void handle_commands(){
         } else if(strstr(command, "2ALL")){
             scanf("%s", str);
             send_broadcast_message(str);
-        } else if (strstr(command, "FRIENDS")) {
-            //msg.type = FRIENDS;
+        } else if (strstr(command, "STOP")) {
+            stop_client();
+            break;
         }
 
     }
@@ -116,13 +137,42 @@ void listen_to_messages(){
     }
 }
 
+
+void usr_handler(int signum) {
+    close_queues();
+    exit(0);
+}
+
+void int_handler(int signum) {
+    stop_client();
+    if(rec_pid != 0) {
+        kill(rec_pid, SIGUSR1);
+    }
+    exit(0);
+}
+
+void handle_signals(){
+    struct sigaction usr_act, int_act;
+
+    usr_act.sa_handler = usr_handler;
+    sigemptyset (&usr_act.sa_mask);
+    sigaction(SIGUSR1, &usr_act, NULL);
+
+    int_act.sa_handler = int_handler;
+    sigemptyset (&int_act.sa_mask);
+    sigaction(SIGINT, &int_act, NULL);
+}
+
 int main() {
     init_queues();
-    if(fork() == 0){
+    handle_signals();
+    rec_pid = fork();
+    if(rec_pid == 0){
         listen_to_messages();
+        kill(getppid(), SIGUSR1);
     } else {
         handle_commands();
+        kill(rec_pid, SIGUSR1);
     }
-
     return 0;
 }

@@ -21,6 +21,7 @@ void init_client(int client_key, int client_msg_key) {
     }
     clients[cur_client].qid = qid;
     clients[cur_client].msg_qid = msg_qid;
+    clients[cur_client].closed = 0;
     msg msg;
     msg.type = CTRL;
     sprintf(msg.data, "%d", cur_client);
@@ -59,6 +60,13 @@ void send_broadcast_message(int sender_id, const char *content){
     }
 }
 
+void stop_client(int id){
+    clients[id].closed = 1;
+    close_queue(clients[id].qid);
+    close_queue(clients[id].msg_qid);
+    printf("Client %d disconnected\n", id);
+}
+
 void handle_msg_by_type(msg msg) {
     printf("Received message %ld %s\n", msg.type, msg.data);
     char* args[3];
@@ -77,6 +85,8 @@ void handle_msg_by_type(msg msg) {
             break;
         case TO_ALL:
             send_broadcast_message(atoi(args[0]), args[1]);
+        case STOP:
+            stop_client(atoi(args[0]));
         default:
             fprintf(stderr, "Unrecognized message type");
     }

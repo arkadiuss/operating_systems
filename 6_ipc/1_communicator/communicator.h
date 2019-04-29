@@ -35,6 +35,9 @@ int snd_msg(int qid, msg *msg) {
 int rcv_msg(int qid, msg *msg, int type) {
     return (int) msgrcv(qid, msg, MSG_SIZE, type, 0);
 }
+int close_queue(int qid){
+    return msgctl(qid, IPC_RMID, NULL);
+}
 #endif
 #ifdef PX // queues from POSIX
 #include <fcntl.h>
@@ -64,6 +67,9 @@ int rcv_msg(int qid, msg *msg, int type) {
     strcpy(msg->data, buffer);
     return res;
 }
+int close_queue(int qid){
+
+}
 #endif
 
 
@@ -75,6 +81,7 @@ enum client_message_types {
 typedef struct client {
     int qid;
     int msg_qid;
+    int closed;
 } client;
 
 #endif //COMMUNICATOR_COMMUNICATOR_H
