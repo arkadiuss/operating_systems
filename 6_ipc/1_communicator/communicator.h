@@ -5,7 +5,7 @@
 #ifndef COMMUNICATOR_COMMUNICATOR_H
 #define COMMUNICATOR_COMMUNICATOR_H
 
-#define MSG_SIZE 30
+#define MSG_SIZE 50
 #define MAX_CLIENTS_CNT 100
 
 
@@ -72,16 +72,15 @@ int close_queue(int qid){
 }
 #endif
 
-
-
 enum client_message_types {
-    CTRL = 1L, MESSAGE = 2L
+    CTRL = 1L, MESSAGE = 2L, STOP_CLIENT = 3L
 };
 
 typedef struct client {
     int qid;
     int msg_qid;
     int closed;
+    int pid;
 } client;
 
 #endif //COMMUNICATOR_COMMUNICATOR_H

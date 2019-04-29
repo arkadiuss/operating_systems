@@ -4,11 +4,13 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 
 client clients[MAX_CLIENTS_CNT];
 int cur_client = 0;
+int msqid;
 
-void init_client(int client_key, int client_msg_key) {
+void init_client(int pid, int client_key, int client_msg_key) {
     printf("Initializing client with id %d, key %d\n", cur_client, client_key);
     int qid, msg_qid;
     if((qid = create_queue(client_key, 0)) < 0){
@@ -19,6 +21,7 @@ void init_client(int client_key, int client_msg_key) {
         fprintf(stderr, "Unable to open child queue");
         return;
     }
+    clients[cur_client].pid = pid;
     clients[cur_client].qid = qid;
     clients[cur_client].msg_qid = msg_qid;
     clients[cur_client].closed = 0;
@@ -33,24 +36,26 @@ void init_client(int client_key, int client_msg_key) {
     printf("Client %d initialized successfully, qid: %d\n", cur_client-1, qid);
 }
 
+void send_message(int id, msg *msg){
+    if(snd_msg(clients[id].qid, msg) < 0){
+        fprintf(stderr, "Unable to send message. Error: %s\n ", strerror(errno));
+        return;
+    }
+    kill(clients[id].pid, SIGRTMIN);
+}
+
 void respond_to_echo(int client_id, char *str) {
     msg msg;
     msg.type = CTRL;
     strcpy(msg.data, str);
-    if(snd_msg(clients[client_id].qid, &msg) < 0){
-        fprintf(stderr, "Unable to send echo message\n");
-        return;
-    }
+    send_message(client_id, &msg);
 }
 
 void send_message_to_one(int sender_id, int receiver_id, const char *content){
     msg msg;
     msg.type = MESSAGE;
     sprintf(msg.data, "From %d: %s", sender_id, content);
-    if(snd_msg(clients[receiver_id].qid, &msg) < 0){
-        fprintf(stderr, "Unable to send private message\n");
-        return;
-    }
+    send_message(receiver_id, &msg);
 }
 
 void send_broadcast_message(int sender_id, const char *content){
@@ -60,22 +65,32 @@ void send_broadcast_message(int sender_id, const char *content){
     }
 }
 
-void stop_client(int id){
-    clients[id].closed = 1;
-    close_queue(clients[id].qid);
-    close_queue(clients[id].msg_qid);
-    printf("Client %d disconnected\n", id);
+void disconnect_client(int id){
+    if(!clients[id].closed){
+        clients[id].closed = 1;
+        printf("Client %d disconnected\n", id);
+    }
+}
+
+void stop_all_clients() {
+    msg msg;
+    msg.type = STOP_CLIENT;
+    for(int i = 0; i < cur_client; i++){
+        send_message(i, &msg);
+        disconnect_client(i);
+    }
 }
 
 void handle_msg_by_type(msg msg) {
     printf("Received message %ld %s\n", msg.type, msg.data);
-    char* args[3];
+
+    char* args[5];
     int argc = split_to_arr(args, msg.data);
     //TODO: ARGS VALIDATION
     switch (msg.type){
         case INIT:
             //if(!is_integer(args[0]))
-            init_client(atoi(args[1]), atoi(args[2]));
+            init_client(atoi(args[1]), atoi(args[2]), atoi(args[3]));
             break;
         case ECHO:
             respond_to_echo(atoi(args[0]), args[1]);
@@ -85,26 +100,43 @@ void handle_msg_by_type(msg msg) {
             break;
         case TO_ALL:
             send_broadcast_message(atoi(args[0]), args[1]);
+            break;
         case STOP:
-            stop_client(atoi(args[0]));
+            disconnect_client(atoi(args[0]));
+            break;
         default:
             fprintf(stderr, "Unrecognized message type");
     }
 }
 
+void int_handler(int signum) {
+    stop_all_clients();
+    close_queue(msqid);
+    exit(0);
+}
+
+void handle_signals() {
+    struct sigaction int_act;
+
+    int_act.sa_handler = int_handler;
+    sigemptyset (&int_act.sa_mask);
+    sigaction(SIGINT, &int_act, NULL);
+}
+
 int main() {
-    int msqid;
 
     if((msqid = create_queue(QKEY, 1)) < 0){
         show_error_and_exit("Unable to create queue", 1);
     }
 
-    printf("qid %d \n", msqid);
+    printf("Server qid %d \n", msqid);
+
+    handle_signals();
 
     while(1) {
         msg received_msg;
         if(rcv_msg(msqid, &received_msg, -TYPES_CNT) < 0) { //-types count to specify priority of messages
-            fprintf(stderr, "Error while receiving");
+            fprintf(stderr, "Error while receiving\n");
         }
         handle_msg_by_type(received_msg);
     }

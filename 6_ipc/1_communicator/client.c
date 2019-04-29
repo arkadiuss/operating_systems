@@ -11,8 +11,6 @@ int msqid;
 int client_qid;
 int client_msg_qid;
 
-pid_t rec_pid = 0;
-
 int generate_number(){
     pid_t pid = getpid();
     return 123*pid + 1000;
@@ -20,7 +18,7 @@ int generate_number(){
 
 msg generate_init(int client_key, int client_msg_key) {
     msg msg;
-    sprintf(msg.data, "INIT %d %d", client_key, client_msg_key);
+    sprintf(msg.data, "INIT %d %d %d", getpid(), client_key, client_msg_key);
     msg.type = INIT;
     return msg;
 }
@@ -87,7 +85,6 @@ void send_broadcast_message(const char *str){
 }
 
 void close_queues(){
-    close_queue(msqid);
     close_queue(client_qid);
     close_queue(client_msg_qid);
 }
@@ -127,36 +124,36 @@ void handle_commands(){
     }
 }
 
-void listen_to_messages(){
-    msg received_msg;
-    while(1){
-        if(rcv_msg(client_qid, &received_msg, 0) < 0){
-            fprintf(stderr, "Unable to read message\n");
-        }
-        printf("I've received a message! MESSAGE: %s\n", received_msg.data);
-    }
-}
-
-
-void usr_handler(int signum) {
+void stopped_by_server(){
+    printf("Stopping message from server. Exiting... \n");
     close_queues();
     exit(0);
 }
 
+void listen_to_message(){
+    msg received_msg;
+    if(rcv_msg(client_qid, &received_msg, 0) < 0){
+        fprintf(stderr, "Unable to read message\n");
+    }
+    printf("%d %d revdf\n", received_msg.type, STOP_CLIENT);
+    if(received_msg.type == STOP_CLIENT){
+        stopped_by_server();
+    } else {
+        printf("I've received a message! MESSAGE: %s\n", received_msg.data);
+    }
+}
+
 void int_handler(int signum) {
     stop_client();
-    if(rec_pid != 0) {
-        kill(rec_pid, SIGUSR1);
-    }
     exit(0);
 }
 
 void handle_signals(){
-    struct sigaction usr_act, int_act;
+    struct sigaction lst_act, int_act;
 
-    usr_act.sa_handler = usr_handler;
-    sigemptyset (&usr_act.sa_mask);
-    sigaction(SIGUSR1, &usr_act, NULL);
+    lst_act.sa_handler = listen_to_message;
+    sigemptyset (&lst_act.sa_mask);
+    sigaction(SIGRTMIN, &lst_act, NULL);
 
     int_act.sa_handler = int_handler;
     sigemptyset (&int_act.sa_mask);
@@ -166,13 +163,6 @@ void handle_signals(){
 int main() {
     init_queues();
     handle_signals();
-    rec_pid = fork();
-    if(rec_pid == 0){
-        listen_to_messages();
-        kill(getppid(), SIGUSR1);
-    } else {
-        handle_commands();
-        kill(rec_pid, SIGUSR1);
-    }
+    handle_commands();
     return 0;
 }
