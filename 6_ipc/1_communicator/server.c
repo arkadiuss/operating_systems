@@ -51,6 +51,25 @@ void respond_to_echo(int client_id, char *str) {
     send_message(client_id, &msg);
 }
 
+void send_list(int client_id) {
+    msg msg;
+    msg.type = CTRL;
+    strcat(msg.data, "Current users:\n");
+    char line[MSG_SIZE];
+    for(int i = 0; i < cur_client; i++){
+        if(!clients[i].closed && client_id != i){
+            sprintf(line, "Client %d", i);
+            if(clients[client_id].friends[i]) {
+                strcat(line, " friend\n");
+            } else {
+                strcat(line, "\n");
+            }
+            strcat(msg.data, line);
+        }
+    }
+    send_message(client_id, &msg);
+}
+
 void send_message_to_one(int sender_id, int receiver_id, const char *content){
     msg msg;
     msg.type = MESSAGE;
@@ -81,10 +100,37 @@ void stop_all_clients() {
     }
 }
 
+void set_friends(int n, char** friends){
+    printf("Setting %d friends for %s\n", n, friends[0]);
+    int req_id = atoi(friends[0]);
+    for(int i = 0; i < cur_client; i++){
+        clients[req_id].friends[i] = 0;
+    }
+    for(int i = 1; i < n; i++){
+        clients[req_id].friends[atoi(friends[i])] = 1;
+    }
+}
+
+// IT REALLY HURTS WHEN YOU DO O(n^2) ALGORITHM WHEN O(nlogn) IS COMMONLY KNOWN :(
+void add_friends(int n, char** friends){
+    int req_id = atoi(friends[0]);
+    for(int i = 1; i < n; i++){
+        clients[req_id].friends[atoi(friends[i])] = 1;
+    }
+}
+
+// IT REALLY HURTS WHEN YOU DO O(n^2) ALGORITHM WHEN O(nlogn) IS COMMONLY KNOWN :(
+void remove_friends(int n, char** friends){
+    int req_id = atoi(friends[0]);
+    for(int i = 1; i < n; i++){
+        clients[req_id].friends[atoi(friends[i])] = 0;
+    }
+}
+
 void handle_msg_by_type(msg msg) {
     printf("Received message %ld %s\n", msg.type, msg.data);
 
-    char* args[5];
+    char* args[20];
     int argc = split_to_arr(args, msg.data);
     //TODO: ARGS VALIDATION
     switch (msg.type){
@@ -94,6 +140,18 @@ void handle_msg_by_type(msg msg) {
             break;
         case ECHO:
             respond_to_echo(atoi(args[0]), args[1]);
+            break;
+        case LIST:
+            send_list(atoi(args[0]));
+            break;
+        case FRIENDS:
+            set_friends(argc, args);
+            break;
+        case ADD:
+            add_friends(argc, args);
+            break;
+        case REMOVE:
+            remove_friends(argc, args);
             break;
         case TO_ONE:
             send_message_to_one(atoi(args[0]), atoi(args[1]), args[2]);

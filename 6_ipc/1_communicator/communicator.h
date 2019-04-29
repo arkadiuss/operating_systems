@@ -17,9 +17,9 @@ typedef struct msg {
 } msg;
 
 
-const int TYPES_CNT = 7;
+const int TYPES_CNT = 9;
 enum message_types {
-    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L, TO_ONE = 6L, TO_ALL = 7L
+    STOP = 1L, LIST = 2L, FRIENDS = 3L, INIT = 4L, ECHO = 5L, TO_ONE = 6L, TO_ALL = 7L, ADD = 8L, REMOVE = 9L
 };
 
 #ifdef SV // queues from System V
@@ -81,6 +81,7 @@ typedef struct client {
     int msg_qid;
     int closed;
     int pid;
+    int friends[MAX_CLIENTS_CNT];
 } client;
 
 #endif //COMMUNICATOR_COMMUNICATOR_H

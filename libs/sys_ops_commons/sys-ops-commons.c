@@ -59,6 +59,18 @@ int is_integer(char* str){
     return 1;
 }
 
+int is_integer_list(char* str){
+    int i = 0;
+    char c;
+    while((c = str[i++]) != '\0'){
+        if((c < 48 || c > 57) && c != 32) {
+            fprintf(stderr, "%s in not an integer list. sign: \"%d\", pos: %d\n", str, c, i-1);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void show_error_and_exit(const char *err, int exit_code) {
     fprintf(stderr, "Error: %s Strerr: %s", err, strerror(errno));
     exit(exit_code);

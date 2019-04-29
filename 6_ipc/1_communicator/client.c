@@ -64,6 +64,16 @@ void send_echo(const char *str){
     }
 }
 
+void send_list_request(){
+    msg msg;
+    msg.type = LIST;
+    sprintf(msg.data, "%d", client_id);
+    if(snd_msg(msqid, &msg) < 0){
+        fprintf(stderr, "Unable to send list message\n");
+        return;
+    }
+}
+
 void send_message(int id, const char *str){
     msg msg;
     msg.type = TO_ONE;
@@ -100,25 +110,54 @@ void stop_client(){
     close_queues();
 }
 
+void get_rest_line_and_send(int cmd){
+    size_t ss = MSG_SIZE;
+    char *line = malloc(sizeof(char) * MSG_SIZE);
+    int size = getline(&line, &ss, stdin);
+    line[size - 1] = '\0'; //workaround for \lf\rf
+
+    if(!is_integer_list(line)){
+        fprintf(stderr, "Not valid integer list\n");
+        return;
+    }
+
+    msg msg;
+    msg.type = cmd;
+    sprintf(msg.data, "%d %s", client_id, line);
+    if(snd_msg(msqid, &msg) < 0){
+        fprintf(stderr, "Unable to send stop message\n");
+        return;
+    }
+    free(line);
+}
+
 void handle_commands(){
     char command[MSG_SIZE];
     char str[MSG_SIZE];
     while(1) {
         scanf("%s", command);
         printf("COMMAND %s\n", command);
-        if(strstr(command, "ECHO")){
+        if(strcmp(command, "ECHO") == 0){
             scanf("%s", str);
             printf("asdsa %s\n", str);
             send_echo(str);
-        } else if(strstr(command, "2ONE")){
+        } else if(strcmp(command, "LIST") == 0){
+            send_list_request();
+        } else if(strcmp(command, "FRIENDS") == 0){
+            get_rest_line_and_send(FRIENDS);
+        } else if(strcmp(command, "ADD") == 0){
+            get_rest_line_and_send(ADD);
+        } else if(strcmp(command, "REMOVE") == 0){
+            get_rest_line_and_send(REMOVE);
+        }else if(strcmp(command, "2ONE") == 0){
             int id;
             scanf("%d", &id);
             scanf("%s", str);
             send_message(id, str);
-        } else if(strstr(command, "2ALL")){
+        } else if(strcmp(command, "2ALL") == 0){
             scanf("%s", str);
             send_broadcast_message(str);
-        } else if (strstr(command, "STOP")) {
+        } else if (strcmp(command, "STOP") == 0) {
             stop_client();
             break;
         }
