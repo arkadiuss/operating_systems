@@ -108,7 +108,6 @@ void stop_all_clients() {
 }
 
 void set_friends(int n, char** friends){
-    printf("Setting %d friends for %s\n", n, friends[0]);
     int req_id = atoi(friends[0]);
     for(int i = 0; i < cur_client; i++){
         clients[req_id].friends[i] = 0;
