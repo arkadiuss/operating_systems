@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
 
 client clients[MAX_CLIENTS_CNT];
 int cur_client = 0;
@@ -71,10 +72,12 @@ void send_list(int client_id) {
 }
 
 void send_message_to_one(int sender_id, int receiver_id, const char *content){
-    msg msg;
-    msg.type = MESSAGE;
-    sprintf(msg.data, "From %d: %s", sender_id, content);
-    send_message(receiver_id, &msg);
+    if(receiver_id >= 0 && receiver_id < cur_client && !clients[receiver_id].closed) {
+        msg msg;
+        msg.type = MESSAGE;
+        sprintf(msg.data, "From %d: %s", sender_id, content);
+        send_message(receiver_id, &msg);
+    }
 }
 
 void send_message_to_friends(int sender_id, const char *content){
@@ -113,7 +116,9 @@ void set_friends(int n, char** friends){
         clients[req_id].friends[i] = 0;
     }
     for(int i = 1; i < n; i++){
-        clients[req_id].friends[atoi(friends[i])] = 1;
+        int fid = atoi(friends[i]);
+        if(fid >= 0 && fid < cur_client)
+            clients[req_id].friends[fid] = 1;
     }
 }
 
@@ -121,7 +126,9 @@ void set_friends(int n, char** friends){
 void add_friends(int n, char** friends){
     int req_id = atoi(friends[0]);
     for(int i = 1; i < n; i++){
-        clients[req_id].friends[atoi(friends[i])] = 1;
+        int fid = atoi(friends[i]);
+        if(fid >= 0 && fid < cur_client)
+            clients[req_id].friends[fid] = 1;
     }
 }
 
@@ -129,7 +136,9 @@ void add_friends(int n, char** friends){
 void remove_friends(int n, char** friends){
     int req_id = atoi(friends[0]);
     for(int i = 1; i < n; i++){
-        clients[req_id].friends[atoi(friends[i])] = 0;
+        int fid = atoi(friends[i]);
+        if(fid >= 0 && fid < cur_client)
+            clients[req_id].friends[fid] = 0;
     }
 }
 
@@ -206,6 +215,7 @@ int main() {
             fprintf(stderr, "Error while receiving\n");
         }
         handle_msg_by_type(received_msg);
+        sleep(2);
     }
 }
 
