@@ -68,7 +68,7 @@ int rcv_msg(int qid, msg *msg, int type) {
     return res;
 }
 int close_queue(int qid){
-
+    return mq_close(qid);
 }
 #endif
 

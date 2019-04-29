@@ -105,8 +105,10 @@ void handle_commands(){
     char str[MSG_SIZE];
     while(1) {
         scanf("%s", command);
+        printf("COMMAND %s\n", command);
         if(strstr(command, "ECHO")){
             scanf("%s", str);
+            printf("asdsa %s\n", str);
             send_echo(str);
         } else if(strstr(command, "2ONE")){
             int id;
@@ -135,7 +137,6 @@ void listen_to_message(){
     if(rcv_msg(client_qid, &received_msg, 0) < 0){
         fprintf(stderr, "Unable to read message\n");
     }
-    printf("%d %d revdf\n", received_msg.type, STOP_CLIENT);
     if(received_msg.type == STOP_CLIENT){
         stopped_by_server();
     } else {
@@ -152,6 +153,7 @@ void handle_signals(){
     struct sigaction lst_act, int_act;
 
     lst_act.sa_handler = listen_to_message;
+    lst_act.sa_flags = SA_RESTART;
     sigemptyset (&lst_act.sa_mask);
     sigaction(SIGRTMIN, &lst_act, NULL);
 
