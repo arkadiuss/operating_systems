@@ -141,32 +141,35 @@ void handle_commands(){
     char command[MSG_SIZE];
     char str[MSG_SIZE];
     while(1) {
-        scanf("%s", command);
-        if(strcmp(command, "ECHO") == 0){
-            scanf("%s", str);
-            send_echo(str);
-        } else if(strcmp(command, "LIST") == 0){
-            send_list_request();
-        } else if(strcmp(command, "FRIENDS") == 0){
-            get_rest_line_and_send(FRIENDS);
-        } else if(strcmp(command, "ADD") == 0){
-            get_rest_line_and_send(ADD);
-        } else if(strcmp(command, "REMOVE") == 0){
-            get_rest_line_and_send(REMOVE);
-        }else if(strcmp(command, "2ONE") == 0){
-            int id;
-            scanf("%d", &id);
-            scanf("%s", str);
-            send_message(id, str);
-        } else if(strcmp(command, "2ALL") == 0){
-            scanf("%s", str);
-            send_broadcast_message(str);
-        } else if(strcmp(command, "2FRIENDS") == 0){
-            scanf("%s", str);
-            send_message_to_friends(str);
-        } else if (strcmp(command, "STOP") == 0) {
-            stop_client();
-            break;
+        if(scanf("%s", command) != EOF) {
+            if (strcmp(command, "ECHO") == 0) {
+                scanf("%s", str);
+                send_echo(str);
+            } else if (strcmp(command, "LIST") == 0) {
+                send_list_request();
+            } else if (strcmp(command, "FRIENDS") == 0) {
+                get_rest_line_and_send(FRIENDS);
+            } else if (strcmp(command, "ADD") == 0) {
+                get_rest_line_and_send(ADD);
+            } else if (strcmp(command, "REMOVE") == 0) {
+                get_rest_line_and_send(REMOVE);
+            } else if (strcmp(command, "2ONE") == 0) {
+                int id;
+                scanf("%d", &id);
+                scanf("%s", str);
+                send_message(id, str);
+            } else if (strcmp(command, "2ALL") == 0) {
+                scanf("%s", str);
+                send_broadcast_message(str);
+            } else if (strcmp(command, "2FRIENDS") == 0) {
+                scanf("%s", str);
+                send_message_to_friends(str);
+            } else if (strcmp(command, "STOP") == 0) {
+                stop_client();
+                break;
+            }
+        } else {
+            printf("EOF reached\n");
         }
     }
 }

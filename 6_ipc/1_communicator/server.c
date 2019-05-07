@@ -93,7 +93,7 @@ void send_broadcast_message(int sender_id, const char *content){
 void disconnect_client(int id){
     if(!clients[id].closed){
         clients[id].closed = 1;
-        close_queue(clients[id].qid, 0, 0);
+        //close_queue(clients[id].qid, 0, 0);
         printf("Client %d disconnected\n", id);
     }
 }
