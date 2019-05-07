@@ -1,0 +1,3 @@
+/home/student/operating_systems/6_ipc/1_communicator/CMakeFiles/client.dir
+/home/student/operating_systems/6_ipc/1_communicator/CMakeFiles/server.dir
+/home/student/operating_systems/6_ipc/1_communicator/CMakeFiles/sys_ops_commons.dir

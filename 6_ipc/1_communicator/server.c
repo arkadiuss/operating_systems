@@ -1,4 +1,7 @@
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/msg.h>
 #include "communicator.h"
 #include <sys-ops-commons.h>
 #include <errno.h>
@@ -13,14 +16,13 @@ int msqid;
 
 void init_client(int pid, int client_key, int client_msg_key) {
     printf("Initializing client with id %d, key %d\n", cur_client, client_key);
-    int qid, msg_qid;
+    int qid;
     if((qid = create_queue(client_key, 0)) < 0){
         fprintf(stderr, "Unable to open child queue");
         return;
     }
     clients[cur_client].pid = pid;
     clients[cur_client].qid = qid;
-    clients[cur_client].msg_qid = msg_qid;
     clients[cur_client].closed = 0;
     msg msg;
     msg.type = CTRL;
@@ -102,8 +104,10 @@ void stop_all_clients() {
     msg msg;
     msg.type = STOP_CLIENT;
     for(int i = 0; i < cur_client; i++){
-        send_message(i, &msg);
-        disconnect_client(i);
+    	if(!clients[i].closed){
+        	send_message(i, &msg);
+        	disconnect_client(i);
+        }
     }
 }
 
