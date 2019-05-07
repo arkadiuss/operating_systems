@@ -18,10 +18,6 @@ void init_client(int pid, int client_key, int client_msg_key) {
         fprintf(stderr, "Unable to open child queue");
         return;
     }
-    if((msg_qid = create_queue(client_msg_key, 0)) < 0){
-        fprintf(stderr, "Unable to open child queue");
-        return;
-    }
     clients[cur_client].pid = pid;
     clients[cur_client].qid = qid;
     clients[cur_client].msg_qid = msg_qid;
@@ -97,6 +93,7 @@ void send_broadcast_message(int sender_id, const char *content){
 void disconnect_client(int id){
     if(!clients[id].closed){
         clients[id].closed = 1;
+        close_queue(clients[id].qid, 0, 0);
         printf("Client %d disconnected\n", id);
     }
 }
@@ -147,7 +144,7 @@ void handle_msg_by_type(msg msg) {
 
     char* args[20];
     int argc = split_to_arr(args, msg.data);
-    //TODO: ARGS VALIDATION
+    //TODO: add validation
     switch (msg.type){
         case INIT:
             //if(!is_integer(args[0]))
@@ -187,7 +184,7 @@ void handle_msg_by_type(msg msg) {
 
 void int_handler(int signum) {
     stop_all_clients();
-    close_queue(msqid);
+    close_queue(msqid, QKEY, 1);
     exit(0);
 }
 

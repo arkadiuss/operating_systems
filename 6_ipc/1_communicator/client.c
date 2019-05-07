@@ -6,6 +6,7 @@
 #include <string.h>
 #include <signal.h>
 
+int client_key;
 int client_id;
 int msqid;
 int client_qid;
@@ -29,17 +30,12 @@ int init_queues(){
     }
     printf("Client qid %d\n", msqid);
 
-    int client_key = generate_number();
+    client_key = generate_number();
     if((client_qid = create_queue(client_key, 1)) < 0){
         show_error_and_exit("Unable to create children queue", 1);
     }
 
-    int client_msg_key = client_key + 1;
-    if((client_msg_qid = create_queue(client_msg_key, 1)) < 0){
-        show_error_and_exit("Unable to create children message queue", 1);
-    }
-
-    msg init_msg = generate_init(client_key, client_msg_key);
+    msg init_msg = generate_init(client_key, 0);
     if(snd_msg(msqid, &init_msg) < 0){
         show_error_and_exit("Unable to send message", 1);
     }
@@ -105,8 +101,8 @@ void send_message_to_friends(const char *str){
 }
 
 void close_queues(){
-    close_queue(client_qid);
-    close_queue(client_msg_qid);
+    close_queue(client_qid, client_key, 1);
+    close_queue(msqid, 0, 0);
 }
 
 void stop_client(){

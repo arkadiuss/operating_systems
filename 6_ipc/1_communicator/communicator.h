@@ -9,7 +9,7 @@
 #define MAX_CLIENTS_CNT 100
 
 
-const int QKEY = 233121;
+const int QKEY = 2331231;
 
 typedef struct msg {
     long type;
@@ -27,8 +27,11 @@ enum message_types {
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <stdlib.h>
+
 int create_queue(int key, int flag){
-    return msgget(key, 0666 | (flag == 1 ? IPC_CREAT : 0));
+    key_t hkey = ftok(getenv("HOME"), key);
+    return msgget(hkey, 0666 | (flag == 1 ? IPC_CREAT : 0));
 }
 int snd_msg(int qid, msg *msg) {
     return msgsnd(qid, msg, MSG_SIZE, 0);
@@ -36,8 +39,10 @@ int snd_msg(int qid, msg *msg) {
 int rcv_msg(int qid, msg *msg, int type) {
     return (int) msgrcv(qid, msg, MSG_SIZE, type, 0);
 }
-int close_queue(int qid){
-    return msgctl(qid, IPC_RMID, NULL);
+void close_queue(int qid, int qkey, int flag){
+    if(flag)
+        return msgctl(qid, IPC_RMID, NULL);
+    return 0;
 }
 #endif
 #ifdef PX // queues from POSIX
@@ -45,6 +50,7 @@ int close_queue(int qid){
 #include <sys/stat.h>
 #include <mqueue.h>
 #include <string.h>
+
 
 int create_queue(int key, int flag){
     char name[11];
@@ -68,8 +74,13 @@ int rcv_msg(int qid, msg *msg, int type) {
     strcpy(msg->data, buffer);
     return res;
 }
-int close_queue(int qid){
-    return mq_close(qid);
+void close_queue(int qid, int qkey, int flag){
+    mq_close(qid);
+    if(flag){
+        char name[11];
+        sprintf(name, "/q%d", qkey);
+        mq_unlink(name);
+    }
 }
 #endif
 
