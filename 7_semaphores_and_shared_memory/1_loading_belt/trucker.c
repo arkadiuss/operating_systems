@@ -10,7 +10,7 @@
 
 int X, K, M;
 int shmid, semid;
-void* packs;
+box* packs;
 
 void open_ipc() {
     //SHARED MEMORY
@@ -19,7 +19,7 @@ void open_ipc() {
         show_error_and_exit("Unable to get shared memory key", 1);
     }
 
-    if((shmid = shmget(shmkey, MEM_SIZE, 0666 | IPC_CREAT | IPC_EXCL)) < 0) {
+    if((shmid = shmget(shmkey, MEM_SIZE * sizeof(box), 0666 | IPC_CREAT | IPC_EXCL)) < 0) {
         shmctl(shmid, IPC_RMID, 0);
         show_error_and_exit("Unable to get shared memory", 1);
     }
@@ -55,11 +55,37 @@ void int_handler(int signum) {
     close_ipc();
 }
 
+void init_semaphores(K, M) {
+    union semun
+    {
+        int val;
+        struct semid_ds *buf;
+        ushort array [1];
+    } sem_attr;
+    sem_attr.val = K;
+    if(semctl(semid, 0, SETVAL, sem_attr) == -1){
+        fprintf(stderr, "Unable to send K value");
+    }
+    sem_attr.val = M;
+    if(semctl(semid, 1, SETVAL, sem_attr) == -1){
+        fprintf(stderr, "Unable to send M value");
+    }
+}
+
 void load_trucks() {
-    int c = 5;
-    while(c--) {
-        printf("Loop\n");
-        sleep(2);
+    struct sembuf semops [2];
+    semops[0].sem_num = 0;
+    semops[0].sem_op = 1;
+    semops[0].sem_flg = 0;
+    semops[1].sem_num = 1;
+    semops[1].sem_op = 2;
+    semops[1].sem_flg = 0;
+    while(1) {
+        if(semop(semid, semops, 2) == -1) {
+            fprintf(stderr, "Unable to get pack\n");
+        }
+        printf("Loading to truck\n");
+        sleep(1);
     }
 }
 
@@ -76,6 +102,7 @@ int main(int argc, char **argv) {
     sigaction(SIGINT, &intact, NULL);
 
     open_ipc();
+    init_semaphores(K, M);
     load_trucks();
     close_ipc();
     return 0;

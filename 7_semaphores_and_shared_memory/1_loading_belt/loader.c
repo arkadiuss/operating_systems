@@ -5,10 +5,11 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
+#include <unistd.h>
 
 int N, C = -1;
 int semid, shmid;
-void *packs;
+box *packs;
 
 void read_args(int argc, char **argv) {
     validate_argc(argc, 1);
@@ -43,7 +44,22 @@ void close_ipc() {
 }
 
 void load_packs() {
-    printf("Loading packs\n");
+    int c = C;
+    struct sembuf semops [2];
+    semops[0].sem_num = 0;
+    semops[0].sem_op = -1;
+    semops[0].sem_flg = 0;
+    semops[1].sem_num = 1;
+    semops[1].sem_op = -N;
+    semops[1].sem_flg = 0;
+    while(c--){
+        printf("Waiting for pack to load by %d\n", getppid());
+        printf("Pack %d loaded by %d\n", N, getpid());
+        if(semop(semid, semops, 2) == -1) {
+            fprintf(stderr, "Unable to perform action on semaphores\n");
+        }
+        printf("Pack %d loaded by %d\n", N, getpid());
+    }
 }
 
 int main(int argc, char **argv) {

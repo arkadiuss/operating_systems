@@ -22,4 +22,9 @@ key_t get_sem_key(){
     return ftok(SEM_PATH, PROJECT_ID);
 }
 
+typedef struct box {
+    int id;
+    int w;
+} box;
+
 #endif //LOADINGBELT_BELT_H
