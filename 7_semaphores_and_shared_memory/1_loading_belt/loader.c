@@ -18,13 +18,7 @@ void read_args(int argc, char **argv) {
     }
 }
 
-void load_packs() {
-    printf("Loading packs\n");
-}
-
-int main(int argc, char **argv) {
-    read_args(argc, argv);
-
+void open_ipc() {
     //SHARED MEMORY
     key_t shmkey = get_shm_key();
     if((shmid = shmget(shmkey, 0, 0666)) < 0) {
@@ -40,16 +34,23 @@ int main(int argc, char **argv) {
     if((semid = semget(semkey, 2, 0666)) < 0) {
         show_error_and_exit("Unable to get semaphores", 1);
     }
+}
 
-    load_packs();
-
+void close_ipc() {
     if(shmdt(packs) == -1)  {
         fprintf(stderr, "Unable to detach memory \n");
     }
+}
 
-    if(shmctl(shmid, IPC_RMID, 0) == -1) {
-        show_error_and_exit("Unable to detach memory \n", 1);
-    }
+void load_packs() {
+    printf("Loading packs\n");
+}
 
+int main(int argc, char **argv) {
+    read_args(argc, argv);
+
+    open_ipc();
+    load_packs();
+    close_ipc();
     return 0;
 }

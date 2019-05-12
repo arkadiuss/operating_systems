@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 
-const int PROJECT_ID = 135546;
+const int PROJECT_ID = 13554;
 const char *SHM_PATH = "/tmp/shm_key";
 const char *SEM_PATH = "/tmp/sem_key";
 const int MEM_SIZE = 1024;

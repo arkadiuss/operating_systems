@@ -6,24 +6,13 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <unistd.h>
+#include <signal.h>
 
 int X, K, M;
 int shmid, semid;
 void* packs;
 
-void load_trucks() {
-    while(1) {
-        printf("Loop\n");
-        sleep(2);
-    }
-}
-
-int main(int argc, char **argv) {
-    validate_argc(argc, 3);
-    X = as_integer(argv[1]);
-    K = as_integer(argv[2]);
-    M = as_integer(argv[3]);
-
+void open_ipc() {
     //SHARED MEMORY
     key_t shmkey;
     if((shmkey = get_shm_key()) == -1) {
@@ -45,20 +34,49 @@ int main(int argc, char **argv) {
         semctl(semid, IPC_RMID, 0);
         show_error_and_exit("Unable to get semaphores", 1);
     }
+}
 
-    load_trucks();
-
+void close_ipc() {
     if(semctl(semid, IPC_RMID, 0) == -1) {
-        fprintf(stderr, "Unable to remove semaphores \n");
+        fprintf(stderr, "Unable to remove semaphores\n");
     }
 
     if(shmdt(packs) == -1)  {
-        fprintf(stderr, "Unable to detach memory \n");
+        fprintf(stderr, "Unable to detach memory\n");
     }
 
     if(shmctl(shmid, IPC_RMID, 0) == -1) {
-        show_error_and_exit("Unable to detach memory \n", 1);
+        show_error_and_exit("Unable to remove shared memory", 1);
     }
+}
 
+void int_handler(int signum) {
+    shmctl(shmid, IPC_RMID, 0);
+    close_ipc();
+}
+
+void load_trucks() {
+    int c = 5;
+    while(c--) {
+        printf("Loop\n");
+        sleep(2);
+    }
+}
+
+int main(int argc, char **argv) {
+    validate_argc(argc, 3);
+    X = as_integer(argv[1]);
+    K = as_integer(argv[2]);
+    M = as_integer(argv[3]);
+
+    //SIGNALS
+    struct sigaction intact;
+    intact.sa_handler = int_handler;
+    sigemptyset(&intact.sa_mask);
+    sigaction(SIGINT, &intact, NULL);
+
+    open_ipc();
+    load_trucks();
+    close_ipc();
     return 0;
 }
