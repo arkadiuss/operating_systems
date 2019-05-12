@@ -71,8 +71,15 @@ int is_integer_list(char* str){
     return 1;
 }
 
+int as_integer(char *str) {
+    if(!is_integer(str)) {
+        exit(1);
+    }
+    return atoi(str);
+}
+
 void show_error_and_exit(const char *err, int exit_code) {
-    fprintf(stderr, "Error: %s Strerr: %s", err, strerror(errno));
+    fprintf(stderr, "Error: %s Strerr: %s\n", err, strerror(errno));
     exit(exit_code);
 }
 
