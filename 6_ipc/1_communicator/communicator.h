@@ -8,6 +8,7 @@
 #define MSG_SIZE 50
 #define MAX_CLIENTS_CNT 100
 
+#include <stdlib.h>
 
 const int QKEY = 2331231;
 
@@ -27,7 +28,6 @@ enum message_types {
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <stdlib.h>
 
 int create_queue(int key, int flag){
     key_t hkey = ftok(getenv("HOME"), key);
@@ -41,8 +41,7 @@ int rcv_msg(int qid, msg *msg, int type) {
 }
 void close_queue(int qid, int qkey, int flag){
     if(flag)
-        return msgctl(qid, IPC_RMID, NULL);
-    return 0;
+        msgctl(qid, IPC_RMID, NULL);
 }
 #endif
 #ifdef PX // queues from POSIX

@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/student/operating_systems/libs/sys_ops_commons/sys-ops-commons.c
+sys-ops-commons.h
+/home/student/operating_systems/libs/sys_ops_commons/sys-ops-commons.h
+stdio.h
+-
+stdlib.h
+-
+fcntl.h
+-
+sys/types.h
+-
+sys/stat.h
+-
+unistd.h
+-
+errno.h
+-
+string.h
+-
+
+/home/student/operating_systems/libs/sys_ops_commons/sys-ops-commons.h
+stdio.h
+-
+

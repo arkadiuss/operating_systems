@@ -1,4 +1,7 @@
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/msg.h>
 #include <unistd.h>
 #include "communicator.h"
 #include <sys-ops-commons.h>
@@ -24,7 +27,7 @@ msg generate_init(int client_key, int client_msg_key) {
     return msg;
 }
 
-int init_queues(){
+void init_queues(){
     if((msqid = create_queue(QKEY, 0)) < 0){
         show_error_and_exit("Unable to create queue", 1);
     }
