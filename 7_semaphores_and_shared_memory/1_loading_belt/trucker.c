@@ -84,7 +84,7 @@ void load_trucks() {
     int truck_load = 0;
     while(1) {
         printf("Checking belt...\n");
-        if(belt->first < belt->last) {
+        while(belt->first < belt->last) {
             semops[1].sem_op = belt->boxes[belt->first].w;
             if (semop(semid, semops, 2) == -1) {
                 fprintf(stderr, "Unable to get pack\n");
