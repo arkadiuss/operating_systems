@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <signal.h>
+#include <wait.h>
 
 #define MAX_LOADERS 100
 
@@ -53,6 +54,8 @@ int main(int argc, char **argv) {
 
     srand(time(0));
     start_loaders(L, N);
-    sleep(10);
+    while(L--){
+        wait(NULL);
+    }
     return 0;
 }
