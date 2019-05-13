@@ -10,7 +10,7 @@
 
 int X, K, M;
 int shmid, semid;
-box* packs;
+shared_memory *belt;
 
 void open_ipc() {
     //SHARED MEMORY
@@ -19,12 +19,12 @@ void open_ipc() {
         show_error_and_exit("Unable to get shared memory key", 1);
     }
 
-    if((shmid = shmget(shmkey, MEM_SIZE * sizeof(box), 0666 | IPC_CREAT | IPC_EXCL)) < 0) {
+    if((shmid = shmget(shmkey, sizeof(shared_memory), 0666 | IPC_CREAT | IPC_EXCL)) < 0) {
         shmctl(shmid, IPC_RMID, 0);
         show_error_and_exit("Unable to get shared memory", 1);
     }
 
-    if((packs = shmat(shmid, 0, 0)) == (void*) -1) {
+    if((belt = shmat(shmid, 0, 0)) == (void*) -1) {
         show_error_and_exit("Unable to access shared memory", 1);
     }
 
@@ -41,7 +41,7 @@ void close_ipc() {
         fprintf(stderr, "Unable to remove semaphores\n");
     }
 
-    if(shmdt(packs) == -1)  {
+    if(shmdt(belt) == -1)  {
         fprintf(stderr, "Unable to detach memory\n");
     }
 
@@ -55,7 +55,9 @@ void int_handler(int signum) {
     close_ipc();
 }
 
-void init_semaphores(K, M) {
+void init_sems_and_shm(K, M) {
+    belt -> first = 0;
+    belt -> last = 0;
     union semun
     {
         int val;
@@ -78,13 +80,25 @@ void load_trucks() {
     semops[0].sem_op = 1;
     semops[0].sem_flg = 0;
     semops[1].sem_num = 1;
-    semops[1].sem_op = 2;
     semops[1].sem_flg = 0;
+    int truck_load = 0;
     while(1) {
-        if(semop(semid, semops, 2) == -1) {
-            fprintf(stderr, "Unable to get pack\n");
+        printf("Checking belt...\n");
+        if(belt->first < belt->last) {
+            semops[1].sem_op = belt->boxes[belt->first].w;
+            if (semop(semid, semops, 2) == -1) {
+                fprintf(stderr, "Unable to get pack\n");
+            }
+            box b = belt->boxes[belt->first];
+            printf("Loading to truck pack %d from %d\n", b.w, b.id);
+            truck_load++;
+            belt->first++;
         }
-        printf("Loading to truck\n");
+        printf("Truck loaded in %d/%d\n", truck_load, X);
+        if(truck_load == X) {
+            printf("Truck fully loaded. Swapping...\n");
+            truck_load = 0;
+        }
         sleep(1);
     }
 }
@@ -102,7 +116,7 @@ int main(int argc, char **argv) {
     sigaction(SIGINT, &intact, NULL);
 
     open_ipc();
-    init_semaphores(K, M);
+    init_sems_and_shm(K, M);
     load_trucks();
     close_ipc();
     return 0;

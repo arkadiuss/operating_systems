@@ -12,7 +12,7 @@
 const int PROJECT_ID = 13554;
 const char *SHM_PATH = "/tmp/shm_key";
 const char *SEM_PATH = "/tmp/sem_key";
-const int MEM_SIZE = 1024;
+#define MAX_BELT_SIZE 1024
 
 key_t get_shm_key(){
     return ftok(SHM_PATH, PROJECT_ID);
@@ -26,5 +26,10 @@ typedef struct box {
     int id;
     int w;
 } box;
+
+typedef struct shared_memory {
+    box boxes[MAX_BELT_SIZE];
+    int first, last;
+} shared_memory;
 
 #endif //LOADINGBELT_BELT_H

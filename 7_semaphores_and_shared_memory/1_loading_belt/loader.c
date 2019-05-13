@@ -9,7 +9,7 @@
 
 int N, C = -1;
 int semid, shmid;
-box *packs;
+shared_memory *belt;
 
 void read_args(int argc, char **argv) {
     validate_argc(argc, 1);
@@ -26,7 +26,7 @@ void open_ipc() {
         show_error_and_exit("Unable to get shared memory", 1);
     }
 
-    if((packs = shmat(shmid, 0, 0)) == (void*) -1) {
+    if((belt = shmat(shmid, 0, 0)) == (void*) -1) {
         show_error_and_exit("Unable to access shared memory", 1);
     }
 
@@ -38,7 +38,7 @@ void open_ipc() {
 }
 
 void close_ipc() {
-    if(shmdt(packs) == -1)  {
+    if(shmdt(belt) == -1)  {
         fprintf(stderr, "Unable to detach memory \n");
     }
 }
@@ -54,10 +54,13 @@ void load_packs() {
     semops[1].sem_flg = 0;
     while(c--){
         printf("Waiting for pack to load by %d\n", getppid());
-        printf("Pack %d loaded by %d\n", N, getpid());
         if(semop(semid, semops, 2) == -1) {
             fprintf(stderr, "Unable to perform action on semaphores\n");
         }
+        box b;
+        b.w = N;
+        b.id = getpid();
+        belt->boxes[belt->last++] = b;
         printf("Pack %d loaded by %d\n", N, getpid());
     }
 }
