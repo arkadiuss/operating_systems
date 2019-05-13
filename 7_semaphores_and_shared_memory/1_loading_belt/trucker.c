@@ -90,14 +90,14 @@ void load_trucks() {
                 fprintf(stderr, "Unable to get pack\n");
             }
             box b = belt->boxes[belt->first];
-            printf("Loading to truck pack %d from %d\n", b.w, b.id);
+            printf("Loading to truck pack %d with weight %d from %d\n", belt->first, b.w, b.id);
             truck_load++;
             belt->first++;
-        }
-        printf("Truck loaded in %d/%d\n", truck_load, X);
-        if(truck_load == X) {
-            printf("Truck fully loaded. Swapping...\n");
-            truck_load = 0;
+            printf("Truck loaded in %d/%d\n", truck_load, X);
+            if(truck_load == X) {
+                printf("Truck fully loaded. Swapping...\n");
+                truck_load = 0;
+            }
         }
         sleep(1);
     }

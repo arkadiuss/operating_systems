@@ -53,7 +53,7 @@ void load_packs() {
     semops[1].sem_op = -N;
     semops[1].sem_flg = 0;
     while(c--){
-        printf("Waiting for pack to load by %d\n", getppid());
+        printf("Waiting for pack to load by %d\n", getpid());
         if(semop(semid, semops, 2) == -1) {
             fprintf(stderr, "Unable to perform action on semaphores\n");
         }
@@ -61,7 +61,7 @@ void load_packs() {
         b.w = N;
         b.id = getpid();
         belt->boxes[belt->last++] = b;
-        printf("Pack %d loaded by %d\n", N, getpid());
+        printf("Pack %d with weight %d loaded by %d\n", belt->last - 1, N, getpid());
     }
 }
 
