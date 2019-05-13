@@ -58,6 +58,11 @@ void load_packs() {
             belt->w += N;
             printf("Pack %d with weight %d loaded by %d\n", belt->n - 1, N, getpid());
             printf("Belt state - load: %d, weight: %d\n", belt->n, belt->w);
+        } else {
+            if(sem_post(sem_belt_count) == -1) {
+                fprintf(stderr, "Unable to release action on semaphore count\n");
+            }
+            sleep(1);
         }
         if(sem_post(sem_belt) == -1) {
             fprintf(stderr, "Unable to release shared memory\n");
