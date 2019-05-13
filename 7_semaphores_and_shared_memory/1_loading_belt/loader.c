@@ -36,13 +36,6 @@ void open_ipc() {
         show_error_and_exit("Unable to get semaphores", 1);
     }
 }
-
-void close_ipc() {
-    if(shmdt(belt) == -1)  {
-        fprintf(stderr, "Unable to detach memory \n");
-    }
-}
-
 void load_packs() {
     int c = C;
     struct sembuf semops[2];
@@ -62,12 +55,9 @@ void load_packs() {
             fprintf(stderr, "Unable to perform action on semaphores\n");
         }
         shmsem[0].sem_op = -1;
-        printf("shm sem val: %d\n", semctl(semid, 2, GETVAL));
         if(semop(semid, shmsem, 1) == -1) {
             fprintf(stderr, "Unable to access shared memory\n");
         }
-        printf("shm sem val2: %d\n", semctl(semid, 2, GETVAL));
-        printf("Take\n");
         box b;
         b.w = N;
         b.id = getpid();
@@ -75,8 +65,6 @@ void load_packs() {
         belt->w += N;
         printf("Pack %d with weight %d loaded by %d\n", belt->n - 1, N, getpid());
         printf("Belt state - load: %d, weight: %d\n", belt->n, belt->w);
-        sleep(3);
-        printf("Release\n");
         shmsem[0].sem_op = 1;
         if(semop(semid, shmsem, 1) == -1) {
             fprintf(stderr, "Unable to release shared memory\n");
@@ -89,6 +77,5 @@ int main(int argc, char **argv) {
 
     open_ipc();
     load_packs();
-    close_ipc();
     return 0;
 }

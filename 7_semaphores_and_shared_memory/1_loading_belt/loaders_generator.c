@@ -3,11 +3,18 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <signal.h>
 
+#define MAX_LOADERS 100
+
+int loaders[MAX_LOADERS];
+int L;
 void start_loaders(int L, int N){
-    while(L--) {
+    int i = 0;
+    while(i < L) {
         int n = rand()%N + 1;
-        if(fork() == 0) {
+        int pid;
+        if((pid = fork()) == 0) {
             char nstr[9];
             sprintf(nstr, "%d", n);
             int c = rand()%20;
@@ -20,15 +27,32 @@ void start_loaders(int L, int N){
                 execl("./loader", "./loader", nstr, NULL);
                 show_error_and_exit("Unable to start loader", 1);
             }
+        } else {
+            loaders[i++] = pid;
         }
     }
 }
 
+void stop_loaders(int signum) {
+    for(int i = 0; i < L; i++) {
+        kill(loaders[i], SIGINT);
+    }
+    exit(0);
+}
+
 int main(int argc, char **argv) {
     validate_argc(argc, 2);
-    int L = as_integer(argv[1]);
+    L = as_integer(argv[1]);
     int N = as_integer(argv[2]);
+
+    struct sigaction intact;
+    sigfillset(&intact.sa_mask);
+    intact.sa_handler = stop_loaders;
+    intact.sa_flags = 0;
+    sigaction(SIGINT, &intact, NULL);
+
     srand(time(0));
     start_loaders(L, N);
+    sleep(10);
     return 0;
 }

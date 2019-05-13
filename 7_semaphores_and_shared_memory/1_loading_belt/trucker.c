@@ -7,6 +7,7 @@
 #include <sys/sem.h>
 #include <unistd.h>
 #include <signal.h>
+#include <stdlib.h>
 
 int X, K, M;
 int shmid, semid;
@@ -41,9 +42,9 @@ void close_ipc() {
         fprintf(stderr, "Unable to remove semaphores\n");
     }
 
-    if(shmdt(belt) == -1)  {
-        fprintf(stderr, "Unable to detach memory\n");
-    }
+//    if(shmdt(belt) == -1)  {
+//        fprintf(stderr, "Unable to detach memory\n");
+//    }
 
     if(shmctl(shmid, IPC_RMID, 0) == -1) {
         show_error_and_exit("Unable to remove shared memory", 1);
@@ -53,6 +54,7 @@ void close_ipc() {
 void int_handler(int signum) {
     shmctl(shmid, IPC_RMID, 0);
     close_ipc();
+    exit(0);
 }
 
 void init_sems_and_shm(int K, int M) {
@@ -96,7 +98,6 @@ void load_trucks() {
         if(semop(semid, shmops, 1) == -1) {
             fprintf(stderr, "Unable to access shared memory\n");
         }
-        printf("take\n");
         int i = 0;
         while(i < belt->n) {
             semops[1].sem_op = belt->boxes[i].w;
@@ -114,8 +115,6 @@ void load_trucks() {
                 truck_load = 0;
             }
         }
-        sleep(3);
-        printf("release\n");
         belt->n = 0;
         shmops[0].sem_op = 1;
         if(semop(semid, shmops, 1) == -1) {
