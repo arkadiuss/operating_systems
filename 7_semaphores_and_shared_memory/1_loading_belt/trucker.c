@@ -42,9 +42,9 @@ void close_ipc() {
         fprintf(stderr, "Unable to remove semaphores\n");
     }
 
-//    if(shmdt(belt) == -1)  {
-//        fprintf(stderr, "Unable to detach memory\n");
-//    }
+    if(shmdt(belt) == -1)  {
+        fprintf(stderr, "Unable to detach memory\n");
+    }
 
     if(shmctl(shmid, IPC_RMID, 0) == -1) {
         show_error_and_exit("Unable to remove shared memory", 1);
@@ -52,7 +52,6 @@ void close_ipc() {
 }
 
 void int_handler(int signum) {
-    shmctl(shmid, IPC_RMID, 0);
     close_ipc();
     exit(0);
 }
