@@ -39,14 +39,14 @@ void open_ipc() {
 void load_packs() {
     int c = C;
     struct sembuf semops[2];
-    semops[0].sem_num = 0;
+    semops[0].sem_num = SEM_BELT_SIZE;
     semops[0].sem_op = -1;
     semops[0].sem_flg = 0;
-    semops[1].sem_num = 1;
+    semops[1].sem_num = SEM_BELT_WEIGHT;
     semops[1].sem_op = -N;
     semops[1].sem_flg = 0;
     struct sembuf shmsem[1];
-    shmsem[0].sem_num = 2;
+    shmsem[0].sem_num = SEM_BELT;
     shmsem[0].sem_op = -1;
     shmsem[0].sem_flg = 0;
     while(c--){

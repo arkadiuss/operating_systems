@@ -14,6 +14,10 @@ const char *SHM_PATH = "/tmp/shm_key";
 const char *SEM_PATH = "/tmp/sem_key";
 #define MAX_BELT_SIZE 1024
 #define SEM_NUM 3
+#define SEM_BELT_SIZE 0
+#define SEM_BELT_WEIGHT 1
+#define SEM_BELT 2
+
 
 key_t get_shm_key(){
     return ftok(SHM_PATH, PROJECT_ID);

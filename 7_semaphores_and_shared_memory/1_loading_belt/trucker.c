@@ -81,15 +81,15 @@ void init_sems_and_shm(int K, int M) {
 
 void load_trucks() {
     struct sembuf shmops[1];
-    shmops[0].sem_num = 2;
+    shmops[0].sem_num = SEM_BELT;
     shmops[0].sem_op = -1;
     shmops[0].sem_flg = 0;
 
     struct sembuf semops [2];
-    semops[0].sem_num = 0;
+    semops[0].sem_num = SEM_BELT_SIZE;
     semops[0].sem_op = 1;
     semops[0].sem_flg = 0;
-    semops[1].sem_num = 1;
+    semops[1].sem_num = SEM_BELT_WEIGHT;
     semops[1].sem_flg = 0;
     int truck_load = 0;
     while(1) {
