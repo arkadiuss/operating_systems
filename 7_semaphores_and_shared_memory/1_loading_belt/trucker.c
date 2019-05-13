@@ -30,7 +30,7 @@ void open_ipc() {
 
     //SEMAPHORES
     key_t semkey = get_sem_key();
-    if((semid = semget(semkey, 2, 0666 | IPC_CREAT | IPC_EXCL)) < 0) {
+    if((semid = semget(semkey, SEM_NUM, 0666 | IPC_CREAT | IPC_EXCL)) < 0) {
         semctl(semid, IPC_RMID, 0);
         show_error_and_exit("Unable to get semaphores", 1);
     }
@@ -55,9 +55,8 @@ void int_handler(int signum) {
     close_ipc();
 }
 
-void init_sems_and_shm(K, M) {
-    belt -> first = 0;
-    belt -> last = 0;
+void init_sems_and_shm(int K, int M) {
+    belt -> n = 0;
     union semun
     {
         int val;
@@ -66,15 +65,24 @@ void init_sems_and_shm(K, M) {
     } sem_attr;
     sem_attr.val = K;
     if(semctl(semid, 0, SETVAL, sem_attr) == -1){
-        fprintf(stderr, "Unable to send K value");
+        fprintf(stderr, "Unable to send K value\n");
     }
     sem_attr.val = M;
     if(semctl(semid, 1, SETVAL, sem_attr) == -1){
-        fprintf(stderr, "Unable to send M value");
+        fprintf(stderr, "Unable to send M value\n");
+    }
+    sem_attr.val = 1;
+    if(semctl(semid, 2, SETVAL, sem_attr) == -1){
+        fprintf(stderr, "Unable to send binary value\n");
     }
 }
 
 void load_trucks() {
+    struct sembuf shmops[1];
+    shmops[0].sem_num = 2;
+    shmops[0].sem_op = -1;
+    shmops[0].sem_flg = 0;
+
     struct sembuf semops [2];
     semops[0].sem_num = 0;
     semops[0].sem_op = 1;
@@ -84,20 +92,34 @@ void load_trucks() {
     int truck_load = 0;
     while(1) {
         printf("Checking belt...\n");
-        while(belt->first < belt->last) {
-            semops[1].sem_op = belt->boxes[belt->first].w;
+        shmops[0].sem_op = -1;
+        if(semop(semid, shmops, 1) == -1) {
+            fprintf(stderr, "Unable to access shared memory\n");
+        }
+        printf("take\n");
+        int i = 0;
+        while(i < belt->n) {
+            semops[1].sem_op = belt->boxes[i].w;
             if (semop(semid, semops, 2) == -1) {
                 fprintf(stderr, "Unable to get pack\n");
             }
-            box b = belt->boxes[belt->first];
-            printf("Loading to truck pack %d with weight %d from %d\n", belt->first, b.w, b.id);
+            box b = belt->boxes[i];
+            belt->w -= b.w;
+            printf("Loading to truck pack with weight %d from %d\n", b.w, b.id);
+            i++;
             truck_load++;
-            belt->first++;
             printf("Truck loaded in %d/%d\n", truck_load, X);
             if(truck_load == X) {
                 printf("Truck fully loaded. Swapping...\n");
                 truck_load = 0;
             }
+        }
+        sleep(3);
+        printf("release\n");
+        belt->n = 0;
+        shmops[0].sem_op = 1;
+        if(semop(semid, shmops, 1) == -1) {
+            fprintf(stderr, "Unable to release shared memory\n");
         }
         sleep(1);
     }

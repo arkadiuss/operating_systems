@@ -32,7 +32,7 @@ void open_ipc() {
 
     //SEMAPHORES
     key_t semkey = get_sem_key();
-    if((semid = semget(semkey, 2, 0666)) < 0) {
+    if((semid = semget(semkey, SEM_NUM, 0666)) < 0) {
         show_error_and_exit("Unable to get semaphores", 1);
     }
 }
@@ -45,23 +45,42 @@ void close_ipc() {
 
 void load_packs() {
     int c = C;
-    struct sembuf semops [2];
+    struct sembuf semops[2];
     semops[0].sem_num = 0;
     semops[0].sem_op = -1;
     semops[0].sem_flg = 0;
     semops[1].sem_num = 1;
     semops[1].sem_op = -N;
     semops[1].sem_flg = 0;
+    struct sembuf shmsem[1];
+    shmsem[0].sem_num = 2;
+    shmsem[0].sem_op = -1;
+    shmsem[0].sem_flg = 0;
     while(c--){
         printf("Waiting for pack to load by %d\n", getpid());
         if(semop(semid, semops, 2) == -1) {
             fprintf(stderr, "Unable to perform action on semaphores\n");
         }
+        shmsem[0].sem_op = -1;
+        printf("shm sem val: %d\n", semctl(semid, 2, GETVAL));
+        if(semop(semid, shmsem, 1) == -1) {
+            fprintf(stderr, "Unable to access shared memory\n");
+        }
+        printf("shm sem val2: %d\n", semctl(semid, 2, GETVAL));
+        printf("Take\n");
         box b;
         b.w = N;
         b.id = getpid();
-        belt->boxes[belt->last++] = b;
-        printf("Pack %d with weight %d loaded by %d\n", belt->last - 1, N, getpid());
+        belt->boxes[belt->n++] = b;
+        belt->w += N;
+        printf("Pack %d with weight %d loaded by %d\n", belt->n - 1, N, getpid());
+        printf("Belt state - load: %d, weight: %d\n", belt->n, belt->w);
+        sleep(3);
+        printf("Release\n");
+        shmsem[0].sem_op = 1;
+        if(semop(semid, shmsem, 1) == -1) {
+            fprintf(stderr, "Unable to release shared memory\n");
+        }
     }
 }
 
