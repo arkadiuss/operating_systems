@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../../libs/sys_ops_commons/sys-ops-commons.h
+stdio.h
+-
+
+/home/student/operating_systems/7_semaphores_and_shared_memory/2_loading_belt_posix/belt_loader.h
+
+/home/student/operating_systems/7_semaphores_and_shared_memory/2_loading_belt_posix/trucker.c
+unistd.h
+-
+stdio.h
+-
+sys-ops-commons.h
+-
+belt_loader.h
+/home/student/operating_systems/7_semaphores_and_shared_memory/2_loading_belt_posix/belt_loader.h
+sys/types.h
+-
+signal.h
+-
+stdlib.h
+-
+sys/mman.h
+-
+sys/stat.h
+-
+fcntl.h
+-
+semaphore.h
+-
+sys/mman.h
+-
+sys/time.h
+-
+

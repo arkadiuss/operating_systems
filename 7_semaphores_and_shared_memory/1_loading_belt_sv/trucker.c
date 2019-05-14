@@ -1,3 +1,5 @@
+#define _POSIX_SOURCE
+#define _XOPEN_SOURCE
 #include <stdio.h>
 #include <sys-ops-commons.h>
 #include "belt_loader.h"
@@ -8,10 +10,21 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/time.h>
+
 
 int X, K, M;
 int shmid, semid;
 shared_memory *belt;
+
+char buff[100];
+
+void logT(const char* log) {
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	unsigned long time_in_micros = 1000000 * tv.tv_sec + tv.tv_usec;
+	printf("%ld: %s", time_in_micros, log);
+}
 
 void open_ipc() {
     //SHARED MEMORY
@@ -62,7 +75,7 @@ void init_sems_and_shm(int K, int M) {
     {
         int val;
         struct semid_ds *buf;
-        ushort array [1];
+        short array [1];
     } sem_attr;
     sem_attr.val = K;
     if(semctl(semid, 0, SETVAL, sem_attr) == -1){
@@ -83,7 +96,10 @@ void load_trucks() {
     shmops[0].sem_num = SEM_BELT;
     shmops[0].sem_op = -1;
     shmops[0].sem_flg = 0;
-
+	shmops[1].sem_num = 3;
+    shmops[1].sem_op = -1;
+    shmops[1].sem_flg = 0;
+    
     struct sembuf semops [2];
     semops[0].sem_num = SEM_BELT_SIZE;
     semops[0].sem_op = 1;
@@ -92,9 +108,11 @@ void load_trucks() {
     semops[1].sem_flg = 0;
     int truck_load = 0;
     while(1) {
-        printf("Checking belt...\n");
         shmops[0].sem_op = -1;
-        if(semop(semid, shmops, 1) == -1) {
+    	shmops[1].sem_op = -1;
+    	sprintf(buff, "Checking belt...\n");
+    	logT(buff);
+        if(semop(semid, shmops, 2) == -1) {
             fprintf(stderr, "Unable to access shared memory\n");
         }
         int i = 0;
@@ -105,12 +123,15 @@ void load_trucks() {
             }
             box b = belt->boxes[i];
             belt->w -= b.w;
-            printf("Loading to truck pack with weight %d from %d\n", b.w, b.id);
+            sprintf(buff, "Loading to truck pack with weight %d from %d\n", b.w, b.id);
+            logT(buff);
             i++;
             truck_load++;
-            printf("Truck loaded in %d/%d\n", truck_load, X);
+            sprintf(buff, "Truck loaded in %d/%d\n", truck_load, X);
+            logT(buff);
             if(truck_load == X) {
-                printf("Truck fully loaded. Swapping...\n");
+                sprintf(buff, "Truck fully loaded. Swapping...\n");
+            	logT(buff);
                 truck_load = 0;
             }
         }
@@ -119,7 +140,6 @@ void load_trucks() {
         if(semop(semid, shmops, 1) == -1) {
             fprintf(stderr, "Unable to release shared memory\n");
         }
-        sleep(1);
     }
 }
 

@@ -1,0 +1,1 @@
+/usr/bin/cc      CMakeFiles/trucker.dir/trucker.c.o  -o trucker -rdynamic libsys_ops_commons.a 

@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../../libs/sys_ops_commons/sys-ops-commons.h
+stdio.h
+-
+
+/home/student/operating_systems/7_semaphores_and_shared_memory/2_loading_belt_posix/loaders_generator.c
+stdio.h
+-
+sys/types.h
+-
+sys-ops-commons.h
+-
+unistd.h
+-
+stdlib.h
+-
+time.h
+-
+wait.h
+-
+signal.h
+-
+

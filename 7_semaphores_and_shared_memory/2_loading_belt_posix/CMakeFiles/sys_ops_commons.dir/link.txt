@@ -1,0 +1,2 @@
+/usr/bin/ar cr libsys_ops_commons.a  CMakeFiles/sys_ops_commons.dir/home/student/operating_systems/libs/sys_ops_commons/sys-ops-commons.c.o
+/usr/bin/ranlib libsys_ops_commons.a

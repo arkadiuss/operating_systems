@@ -1,0 +1,1 @@
+/usr/bin/cc      CMakeFiles/loadingbelt.dir/loaders_generator.c.o  -o loadingbelt -rdynamic libsys_ops_commons.a 
