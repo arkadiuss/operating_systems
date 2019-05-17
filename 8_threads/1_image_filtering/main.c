@@ -2,6 +2,8 @@
 #include <sys-ops-commons.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <math.h>
 
 typedef struct image {
     int w, h;
@@ -13,7 +15,7 @@ typedef struct filter {
     float** pxls;
 } filter;
 
-image *src;
+image *src, *dst;
 filter *flt;
 int threads_count, divide_method;
 char *out_file;
@@ -90,6 +92,16 @@ filter* read_filter(const char* file_name) {
     return new_flt;
 }
 
+void init_out_image(){
+    dst = malloc(sizeof(image));
+    dst->h = src->h;
+    dst->w = src->w;
+    dst->pxls = calloc(sizeof(float*), (size_t) dst->h);
+    for(int i = 0; i<dst->h; i++) {
+        dst->pxls[i] = calloc(sizeof(float), (size_t) dst->w);
+    }
+}
+
 void free_image(image* image){
     for(int i = 0; i<image->h; i++) {
         free(image->pxls[i]);
@@ -120,11 +132,63 @@ void read_arguments(char** argv){
     out_file = argv[5];
 }
 
+typedef struct thread_data {
+    int k, m, t;
+} thread_data;
+
+void count_dest(int x, int y){
+    float sum = 0;
+    for(int i = 0; i < flt->c; i++) {
+        for(int j = 0; j < flt->c; j++) {
+            int indi = max(1, min(src->h-1, x - (int) ceil(flt->c/2) + i));
+            int indj = max(1, min(src->w-1, y - (int) ceil(flt->c/2) + j));
+            sum += src->pxls[indi][indj] * flt->pxls[i][j];
+        }
+    }
+    dst->pxls[x][y] = round(sum);
+}
+
+void* process_image(void* data) {
+    //TODO: time measurement
+    thread_data* td = (thread_data*) data;
+    int k = td->k;
+    int m = td->m;
+    if(td->t == 0)
+        for(int j = (k-1)*src->w/m; j < k*src->w/m; j++)
+            for(int i = 0; i < src->h; i++)
+                count_dest(i, j);
+
+    else if(td->t == 1)
+        for(int i = 0; i < src->h; i++) {
+            //TODO: interleaved
+        }
+    int time = 100;
+    return (void*) time;
+}
+
 int main(int argc, char** argv) {
     validate_argc(argc, 5);
     read_arguments(argv);
-    write_to_file(src, out_file);
+    init_out_image();
+
+    pthread_t threads[threads_count];
+    for(int i = 0; i < threads_count; i++) {
+        thread_data data;
+        data.k = i;
+        data.m = threads_count;
+        data.t = divide_method;
+        pthread_create(&threads[i], NULL, process_image, &data);
+    }
+
+    for(int i = 0; i < threads_count; i++) {
+        long result;
+        pthread_join(threads[i], (void*) &result);
+        printf("%d", result);
+    }
+
+    write_to_file(dst, out_file);
     free_image(src);
+    free_image(dst);
     free_filter(flt);
     return 0;
 }

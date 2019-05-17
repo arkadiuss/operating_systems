@@ -10,4 +10,6 @@ int is_integer_list(char* str);
 int as_integer(char *str);
 void show_error_and_exit(const char *err, int exit_code);
 int split_to_arr(char **args, char *msg);
+int min(int a, int b);
+int max(int a, int b);
 #endif

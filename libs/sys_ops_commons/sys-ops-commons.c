@@ -94,3 +94,11 @@ int split_to_arr(char **args, char *msg) {
     }
     return c;
 }
+
+int max(int a, int b){
+    return a > b ? a : b;
+}
+
+int min(int a, int b){
+    return a < b ? a : b;
+}
