@@ -1,3 +1,5 @@
+#define _POSIX_SOURCE
+#define _XOPEN_SOURCE
 #include <stdio.h>
 #include <sys-ops-commons.h>
 #include "belt_loader.h"
@@ -6,6 +8,7 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 int N, C = -1;
 int semid, shmid;
@@ -17,6 +20,15 @@ void read_args(int argc, char **argv) {
     if(argc > 2) {
         C = as_integer(argv[2]);
     }
+}
+
+char buff[100];
+
+void logT(const char* log) {
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	unsigned long time_in_micros = 1000000 * tv.tv_sec + tv.tv_usec;
+	printf("%ld: %s", time_in_micros, log);
 }
 
 void open_ipc() {
@@ -49,13 +61,17 @@ void load_packs() {
     shmsem[0].sem_num = SEM_BELT;
     shmsem[0].sem_op = -1;
     shmsem[0].sem_flg = 0;
+	shmsem[1].sem_num = 3;
+    shmsem[1].sem_op = 1;
+    shmsem[1].sem_flg = 0;
     while(c--){
-        printf("Waiting for pack to load by %d\n", getpid());
+        sprintf(buff, "Waiting for pack to load by %d\n", getpid());
+        logT(buff);
         if(semop(semid, semops, 2) == -1) {
             fprintf(stderr, "Unable to perform action on semaphores\n");
         }
         shmsem[0].sem_op = -1;
-        if(semop(semid, shmsem, 1) == -1) {
+        if(semop(semid, shmsem, 2) == -1) {
             fprintf(stderr, "Unable to access shared memory\n");
         }
         box b;
@@ -63,8 +79,10 @@ void load_packs() {
         b.id = getpid();
         belt->boxes[belt->n++] = b;
         belt->w += N;
-        printf("Pack %d with weight %d loaded by %d\n", belt->n - 1, N, getpid());
-        printf("Belt state - load: %d, weight: %d\n", belt->n, belt->w);
+        sprintf(buff, "Pack %d with weight %d loaded by %d\n", belt->n - 1, N, getpid());
+        logT(buff);
+        sprintf(buff, "Belt state - load: %d, weight: %d\n", belt->n, belt->w);
+        logT(buff);
         shmsem[0].sem_op = 1;
         if(semop(semid, shmsem, 1) == -1) {
             fprintf(stderr, "Unable to release shared memory\n");

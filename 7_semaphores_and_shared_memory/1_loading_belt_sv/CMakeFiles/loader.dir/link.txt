@@ -1,0 +1,1 @@
+/usr/bin/cc      CMakeFiles/loader.dir/loader.c.o  -o loader -rdynamic libsys_ops_commons.a 

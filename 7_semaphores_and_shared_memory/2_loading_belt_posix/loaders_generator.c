@@ -1,25 +1,28 @@
+#define _POSIX_SOURCE
+#define _XOPEN_SOURCE
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys-ops-commons.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
-#include <signal.h>
 #include <wait.h>
+#include <signal.h>
 
 #define MAX_LOADERS 100
 
 int loaders[MAX_LOADERS];
 int L;
-void start_loaders(int L, int N){
+void start_loaders(int L, int N, int C){
     int i = 0;
     while(i < L) {
-        int n = rand()%N + 1;
+        int n = N;
         int pid;
         if((pid = fork()) == 0) {
             char nstr[9];
             sprintf(nstr, "%d", n);
-            int c = rand()%20;
-            if(c > 10) {
+            int c = C; 
+            if(c > 0) {
                 char cstr[9];
                 sprintf(cstr, "%d", c);
                 execl("./loader", "./loader", nstr, cstr, NULL);
@@ -42,18 +45,19 @@ void stop_loaders(int signum) {
 }
 
 int main(int argc, char **argv) {
-    validate_argc(argc, 2);
+    validate_argc(argc, 3);
     L = as_integer(argv[1]);
     int N = as_integer(argv[2]);
+    int C = as_integer(argv[3]);
 
     struct sigaction intact;
-    sigemptyset(&intact.sa_mask);
+    sigfillset(&intact.sa_mask);
     intact.sa_handler = stop_loaders;
     intact.sa_flags = 0;
     sigaction(SIGINT, &intact, NULL);
 
     srand(time(0));
-    start_loaders(L, N);
+    start_loaders(L, N, C);
     while(L--){
         wait(NULL);
     }

@@ -1,0 +1,4 @@
+/home/student/operating_systems/7_semaphores_and_shared_memory/1_loading_belt_sv/CMakeFiles/loader.dir
+/home/student/operating_systems/7_semaphores_and_shared_memory/1_loading_belt_sv/CMakeFiles/loadingbelt.dir
+/home/student/operating_systems/7_semaphores_and_shared_memory/1_loading_belt_sv/CMakeFiles/sys_ops_commons.dir
+/home/student/operating_systems/7_semaphores_and_shared_memory/1_loading_belt_sv/CMakeFiles/trucker.dir
