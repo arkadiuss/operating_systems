@@ -140,12 +140,12 @@ void count_dest(int x, int y){
     float sum = 0;
     for(int i = 0; i < flt->c; i++) {
         for(int j = 0; j < flt->c; j++) {
-            int indi = max(1, min(src->h-1, x - (int) ceil(flt->c/2) + i));
-            int indj = max(1, min(src->w-1, y - (int) ceil(flt->c/2) + j));
+            int indi = max(0, min(src->h-1, x - (int) ceil(flt->c/2) + i));
+            int indj = max(0, min(src->w-1, y - (int) ceil(flt->c/2) + j));
             sum += src->pxls[indi][indj] * flt->pxls[i][j];
         }
     }
-    dst->pxls[x][y] = round(sum);
+    dst->pxls[x][y] = max(0, min(255.,round(sum)));
 }
 
 void* process_image(void* data) {
@@ -154,13 +154,15 @@ void* process_image(void* data) {
     int k = td->k;
     int m = td->m;
     if(td->t == 0)
-        for(int j = (k-1)*src->w/m; j < k*src->w/m; j++)
-            for(int i = 0; i < src->h; i++)
+        for(int j = (k-1)*src->w/m; j < k*src->w/m; j++) {
+            printf("Thread %d collumn %d\n", k, j);
+            for (int i = 0; i < src->h; i++)
                 count_dest(i, j);
-
+        }
     else if(td->t == 1)
-        for(int i = 0; i < src->h; i++) {
-            //TODO: interleaved
+        for(int j = k-1; j < src->w; j += m) {
+            for (int i = 0; i < src->h; i++)
+                count_dest(i, j);
         }
     int time = 100;
     return (void*) time;
@@ -172,12 +174,12 @@ int main(int argc, char** argv) {
     init_out_image();
 
     pthread_t threads[threads_count];
+    thread_data data[threads_count];
     for(int i = 0; i < threads_count; i++) {
-        thread_data data;
-        data.k = i;
-        data.m = threads_count;
-        data.t = divide_method;
-        pthread_create(&threads[i], NULL, process_image, &data);
+        data[i].k = i + 1;
+        data[i].m = threads_count;
+        data[i].t = divide_method;
+        pthread_create(&threads[i], NULL, process_image, &data[i]);
     }
 
     for(int i = 0; i < threads_count; i++) {
