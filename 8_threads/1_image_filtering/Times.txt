@@ -1,0 +1,46 @@
+t=1, c=3
+Thread 1 finished after 88822 us
+The whole process took 88988 us
+t=2, c=3
+Thread 1 finished after 72322 us
+Thread 2 finished after 70647 us
+The whole process took 72492 us
+t=4, c=3
+Thread 1 finished after 38290 us
+Thread 2 finished after 37550 us
+Thread 3 finished after 38027 us
+Thread 4 finished after 37190 us
+The whole process took 38463 us
+t=8, c=3
+Thread 1 finished after 38396 us
+Thread 2 finished after 31183 us
+Thread 3 finished after 35467 us
+Thread 4 finished after 18276 us
+Thread 5 finished after 32888 us
+Thread 6 finished after 26714 us
+Thread 7 finished after 31273 us
+Thread 8 finished after 32104 us
+The whole process took 39612 us
+t=1, c=30
+Thread 1 finished after 7068877 us
+The whole process took 7069044 us
+t=2, c=30
+Thread 1 finished after 3724029 us
+Thread 2 finished after 3719446 us
+The whole process took 3724192 us
+t=4, c=30
+Thread 1 finished after 3306289 us
+Thread 2 finished after 3348143 us
+Thread 3 finished after 3222580 us
+Thread 4 finished after 3318928 us
+The whole process took 3348302 us
+t=8, c=30
+Thread 1 finished after 3435400 us
+Thread 2 finished after 3575727 us
+Thread 3 finished after 3572376 us
+Thread 4 finished after 3514618 us
+Thread 5 finished after 3319292 us
+Thread 6 finished after 3454025 us
+Thread 7 finished after 3588288 us
+Thread 8 finished after 3515036 us
+The whole process took 3595580 us
