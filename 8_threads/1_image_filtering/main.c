@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <math.h>
+#include <sys/time.h>
 
 typedef struct image {
     int w, h;
@@ -148,14 +149,20 @@ void count_dest(int x, int y){
     dst->pxls[x][y] = max(0, min(255.,round(sum)));
 }
 
+long long get_timestamp(){
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return 1000000LL * tv.tv_sec + tv.tv_usec;
+}
+
 void* process_image(void* data) {
     //TODO: time measurement
     thread_data* td = (thread_data*) data;
     int k = td->k;
     int m = td->m;
+    long long t1 = get_timestamp();
     if(td->t == 0)
         for(int j = (k-1)*src->w/m; j < k*src->w/m; j++) {
-            printf("Thread %d collumn %d\n", k, j);
             for (int i = 0; i < src->h; i++)
                 count_dest(i, j);
         }
@@ -164,8 +171,8 @@ void* process_image(void* data) {
             for (int i = 0; i < src->h; i++)
                 count_dest(i, j);
         }
-    int time = 100;
-    return (void*) time;
+    long long t2 = get_timestamp();
+    return (void*) (t2 - t1);
 }
 
 int main(int argc, char** argv) {
@@ -173,6 +180,7 @@ int main(int argc, char** argv) {
     read_arguments(argv);
     init_out_image();
 
+    long long t1 = get_timestamp();
     pthread_t threads[threads_count];
     thread_data data[threads_count];
     for(int i = 0; i < threads_count; i++) {
@@ -185,8 +193,10 @@ int main(int argc, char** argv) {
     for(int i = 0; i < threads_count; i++) {
         long result;
         pthread_join(threads[i], (void*) &result);
-        printf("%d", result);
+        printf("Thread %d finished after %lld us\n", i + 1, (long long) result);
     }
+    long long t2 = get_timestamp();
+    printf("The whole process took %lld us\n", (t2 - t1));
 
     write_to_file(dst, out_file);
     free_image(src);
