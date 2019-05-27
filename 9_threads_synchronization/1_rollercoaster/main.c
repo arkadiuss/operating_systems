@@ -14,8 +14,9 @@
 #define SEM_FLAGS 0666 | O_CREAT
 #define QUEUE_FLAGS O_RDWR | O_CREAT
 
-#define RIDE "/ride_sem4999"
-#define CARRIAGE "/carriage_sem4999"
+#define RIDE "/ride_sem8999"
+#define CARRIAGE "/carriage_sem8999"
+#define CARRIAGE_EMPTY "/carriage_empty_sem8999"
 
 #define ENTER "/enter_queue4999"
 
@@ -29,7 +30,7 @@ typedef struct {
 } carriage_data;
 
 int W;
-sem_t *ride_sem, *carriage_sem;
+sem_t *ride_sem, *carriage_sem, *carriage_empty_sem;
 mqd_t enter_queue;
 
 pthread_cond_t* order_cond;
@@ -57,14 +58,14 @@ void* passenger(void *data) {
         psngr[id] = 0;
         printf("Passenger %d has left carriage\n", id);
         pthread_mutex_unlock(&psngr_mutex[id]);
-        sem_post(carriage_sem);
+        sem_post(carriage_empty_sem);
     }
     return NULL;
 }
 
 void* carriage(void *data) {
     carriage_data* cdata = (carriage_data*) data;
-    int n = cdata->N;
+    int n = cdata->N + 1;
     int id = cdata->id;
     int C = cdata->C;
 
@@ -83,14 +84,26 @@ void* carriage(void *data) {
         printf("Carriage %d is arriving to platform\n", id);
 
         //leaving
+        int rc = 0;
         for(int c=0;c<C;c++) {
             if(cpsngs[c] != -1){
                 psngr[cpsngs[c]] = 1;
                 pthread_cond_signal(&psngr_cond[cpsngs[c]]);
-            } else {
-                sem_post(carriage_sem);
+                rc++;
             }
         }
+
+        for(int c=0;c<rc;c++)
+            sem_wait(carriage_empty_sem);
+
+        if(n == 0){
+            order[(id+1)%W] = 1;
+            pthread_cond_signal(&order_cond[(id+1)%W]);
+            break; // finished and all passengers has left
+        }
+
+        for(int c=0;c<C;c++)
+            sem_post(carriage_sem);
 
         //entering
         for(int c=0;c<C;c++) {
@@ -129,7 +142,11 @@ void init(){
         sem_unlink(RIDE);
         show_error_and_exit("Unable to open semaphore", 1);
     }
-
+    if((carriage_empty_sem = sem_open(CARRIAGE_EMPTY, SEM_FLAGS, 0666, 0)) == SEM_FAILED){
+        sem_unlink(RIDE);
+        sem_unlink(CARRIAGE);
+        show_error_and_exit("Unable to open semaphore", 1);
+    }
     struct mq_attr attr;
     attr.mq_flags = 0;
     attr.mq_maxmsg = 10;
@@ -147,8 +164,10 @@ void init(){
 void cleanup(){
     sem_close(ride_sem);
     sem_close(carriage_sem);
+    sem_close(carriage_empty_sem);
     sem_unlink(RIDE);
     sem_unlink(CARRIAGE);
+    sem_unlink(CARRIAGE_EMPTY);
     mq_close(enter_queue);
     mq_unlink(ENTER);
 }
