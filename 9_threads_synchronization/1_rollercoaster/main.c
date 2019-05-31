@@ -10,6 +10,7 @@
 #include <mqueue.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/time.h>
 
 #define SEM_FLAGS 0666 | O_CREAT
 #define QUEUE_FLAGS O_RDWR | O_CREAT
@@ -41,22 +42,30 @@ pthread_cond_t* psngr_cond;
 pthread_mutex_t* psngr_mutex;
 int* psngr;
 
+void logT(const char* log, int id) {
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	unsigned long time_in_micros = 1000000 * tv.tv_sec + tv.tv_usec;
+	printf("%ld: ", time_in_micros);
+	printf(log, id);
+}
+
 void* passenger(void *data) {
     passenger_data* pdata = (passenger_data*) data;
     int id = pdata->id;
     char strid[10];
     sprintf(strid, "%d", id);
     while(1) {
-        printf("Passenger %d is waiting for carriage\n", id);
+        logT("Passenger %d is waiting for carriage\n", id);
         sem_wait(carriage_sem);
-        printf("Passenger %d has entered to carriage\n", id);
+        logT("Passenger %d has entered to carriage\n", id);
 
         mq_send(enter_queue, strid, 10, 1);
         pthread_mutex_lock(&psngr_mutex[id]);
         while(!psngr[id])
             pthread_cond_wait(&psngr_cond[id], &psngr_mutex[id]);
         psngr[id] = 0;
-        printf("Passenger %d has left carriage\n", id);
+        logT("Passenger %d has left carriage\n", id);
         pthread_mutex_unlock(&psngr_mutex[id]);
         sem_post(carriage_empty_sem);
     }
@@ -75,13 +84,13 @@ void* carriage(void *data) {
 
     while(n--){
         //waiting for arrival
-        printf("Carriage %d is waiting for arriving to platform\n", id);
+        logT("Carriage %d is waiting for arriving to platform\n", id);
         pthread_mutex_lock(&order_mutex[id]);
         while(!order[id])
             pthread_cond_wait(&order_cond[id], &order_mutex[id]);
         order[id] = 0;
         pthread_mutex_unlock(&order_mutex[id]);
-        printf("Carriage %d is arriving to platform\n", id);
+        logT("Carriage %d is arriving to platform\n", id);
 
         //leaving
         int rc = 0;
@@ -106,31 +115,34 @@ void* carriage(void *data) {
             sem_post(carriage_sem);
 
         //entering
+        int to_click = rand()%C;
+        int pas_click = 0;
         for(int c=0;c<C;c++) {
             char pid[10];
             if(mq_receive(enter_queue, pid, 10, NULL) == -1){
                 printf("Error while receiving: %s\n", strerror(errno));
             }
             cpsngs[c] = atoi(pid);
-            printf("Carriage %d filled in %d/%d\n", id, c+1, C);
+            if(c == to_click)
+            	pas_click = cpsngs[c];
+            //printf("Carriage %d filled in %d/%d\n", id, c+1, C);
         }
-        printf("Passenger %d has clicked the start button\n", cpsngs[C-1]);
-        printf("Carriage %d is departuring from platform\n", id);
+        logT("Passenger %d has clicked the start button\n", pas_click);
+        logT("Carriage %d is departuring from platform\n", id);
         //start riding
         int time = rand()%5;
-        printf("Carriage %d is riding for %d seconds\n", id, time);
+        logT("Carriage %d is riding\n", id);
         sem_wait(ride_sem);
         //leaving
         order[(id+1)%W] = 1;
         pthread_cond_signal(&order_cond[(id+1)%W]);
 
-        printf("Carriage %d is really riding\n", id);
+        //printf("Carriage %d is really riding\n", id);
 
         sleep(time);
-        printf("Carriage %d has finished the ride\n", id);
+        logT("Carriage %d has finished the ride\n", id);
         sem_post(ride_sem);
     }
-    //TODO: leaving at the end
     return NULL;
 }
 
