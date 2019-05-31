@@ -23,8 +23,8 @@ typedef enum {
 } message_type;
 
 client_type get_type(const char *str) {
-    if(strstr(str, "LOCAL") == 0) return LOCAL;
-    if(strstr(str, "REMOTE") == 0) return REMOTE;
+    if(strcmp(str, "LOCAL") == 0) return LOCAL;
+    if(strcmp(str, "REMOTE") == 0) return REMOTE;
     show_error_and_exit("Type should be LOCAL or REMOTE", 1);
 }
 

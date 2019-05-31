@@ -17,7 +17,7 @@ int sock;
 void init_socket(int argc, char ** argv){
     if(type == LOCAL) {
         const char *path = argv[3];
-        if((sock = socket(AF_UNIX, SOCK_STREAM, 0) < 0)) {
+        if((sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
             show_error_and_exit("Unable to create socket", 1);
         }
         struct sockaddr_un address;
@@ -42,6 +42,7 @@ void init_socket(int argc, char ** argv){
             show_error_and_exit("Unable to connect to server", 1);
         }
     }
+    printf("Connected\n");
 }
 
 u_int64_t words(char *text) {
