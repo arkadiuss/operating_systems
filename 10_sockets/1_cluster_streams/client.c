@@ -42,6 +42,7 @@ void init_socket(int argc, char ** argv){
             show_error_and_exit("Unable to connect to server", 1);
         }
     }
+    WRITE_OR_RETURN(sock, name, NAME_SIZE)
     printf("Connected\n");
 }
 
