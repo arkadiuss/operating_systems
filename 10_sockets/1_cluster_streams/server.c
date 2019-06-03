@@ -11,10 +11,10 @@
 
 #define MAX_EVENTS 100
 #define MAX_PATH_LENGTH 108
-#define MAX_FILE_SIZE 8196
 int port;
 char socket_path[MAX_PATH_LENGTH];
 int local_socket, remote_socket;
+int poll_sock;
 client clients[MAX_CLIENTS];
 int ccount = 0;
 
@@ -49,8 +49,88 @@ void init_remote_socket(){
     }
 }
 
-void* accept_connections(void* data){
-    int poll_sock = epoll_create(1);
+void accept_new_client(int fd) {
+    int client_socket;
+    if((client_socket = accept(fd, NULL, NULL)) < 0) {
+        show_error_and_exit("Unable to accept client", 1);
+    }
+    struct epoll_event event;
+    event.events = EPOLLIN;
+    event.data.fd = client_socket;
+    if(epoll_ctl(poll_sock, EPOLL_CTL_ADD, client_socket, &event) < 0) {
+        fprintf(stderr, "Unable to add client to poll\n");
+        return;
+    }
+}
+
+int get_client_by_fd(int fd) {
+    for(int i = 0; i<ccount; i++) {
+        if(clients[i].fd == fd) return i;
+    }
+    return -1;
+}
+
+void handle_register_message(int fd) {
+    uint16_t size;
+    READ_OR_RETURN(fd, &size, MSG_SIZE_SIZE)
+    char name[NAME_SIZE];
+    READ_OR_RETURN(fd, name, size)
+    name[size] = '\0';
+    int id = ccount++;
+    clients[id].fd = fd;
+    strcpy(clients[id].name, name);
+    printf("Client %s with socket %d connected\n", name, fd);
+}
+
+void handle_result(int fd) {
+    uint16_t size;
+    READ_OR_RETURN(fd, &size, MSG_SIZE_SIZE)
+    char msg[MAX_FILE_SIZE];
+    READ_OR_RETURN(fd, msg, size)
+    int client;
+    if((client = get_client_by_fd(fd)) != -1) {
+        clients[client].busy--;
+    }
+    printf("Received message: \n %s\n", msg);
+}
+
+void handle_pong(int fd) {
+    int client;
+    if((client = get_client_by_fd(fd)) != -1) {
+        clients[client].ping_requests--;
+        printf("Reeceived pong from %s\n", clients[client].name);
+    }
+}
+
+void disconnect_client(int id) {
+    clients[id].disconnected = 1;
+    //close(clients[id].fd);
+    printf("Client %s disconnected", clients[id].name);
+}
+
+void handle_response(int fd) {
+    uint8_t type;
+    READ_OR_RETURN(fd, &type, TYPE_SIZE)
+    switch(type) {
+        case REGISTER:
+            handle_register_message(fd);
+            break;
+        case RESULT:
+            handle_result(fd);
+            break;
+        case PONG:
+            handle_pong(fd);
+            break;
+        case UNREGISTER: {
+            int id = get_client_by_fd(fd);
+            if (id != -1) disconnect_client(fd);
+            break;
+        }
+    }
+}
+
+void* handle_messages(void *data){
+    poll_sock = epoll_create(1);
     struct epoll_event event_local, event_remote, *events;
     events = calloc(MAX_EVENTS, sizeof(struct epoll_event));
     event_local.events = EPOLLIN;
@@ -69,23 +149,34 @@ void* accept_connections(void* data){
             show_error_and_exit("Unable to wait for connections", 1);
         }
         for(int i = 0; i < size; i++) {
-            int client_socket;
-            if((client_socket = accept(events[i].data.fd, NULL, NULL)) < 0) {
-                show_error_and_exit("Unable to accept client", 1);
-            }
-            printf("got client before name!!!\n");
-            char name[NAME_SIZE];
-            if(read(client_socket, name, NAME_SIZE) < 0) {
-                fprintf(stderr, "Unable to receive register message");
-                continue;
-            }
-            int id = ccount++;
-            clients[id].fd = client_socket;
-            strcpy(clients[id].name, name);
-            printf("got client %s!!!\n", name);
+            if(events[i].data.fd == remote_socket || events[i].data.fd == local_socket)
+                accept_new_client(events[i].data.fd);
+            else
+                handle_response(events[i].data.fd);
         }
     }
     return NULL;
+}
+
+void send_ping(int id) {
+    uint8_t type = PING;
+    clients[id].ping_requests++;
+    WRITE_OR_RETURN(clients[id].fd, &type, TYPE_SIZE)
+}
+
+void* ping_clients(void* data) {
+    while(1) {
+        for (int i = 0; i < ccount; i++) {
+            if (!clients[i].disconnected) {
+                if (clients[i].ping_requests > 0) {
+                    disconnect_client(i);
+                } else {
+                    send_ping(i);
+                }
+            }
+        }
+        sleep(5);
+    }
 }
 
 int choose_client() {
@@ -134,11 +225,10 @@ int main(int argc, char **argv) {
     init_remote_socket();
     init_local_socket();
 
-    pthread_t accept_connections_thread;
-    pthread_create(&accept_connections_thread, NULL, accept_connections, NULL);
+    pthread_t connections_thread, ping_thread;
+    pthread_create(&connections_thread, NULL, handle_messages, NULL);
+    pthread_create(&ping_thread, NULL, ping_clients, NULL);
 
     accept_requests();
-
-    pthread_join(accept_connections_thread, NULL);
     return 0;
 }

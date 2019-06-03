@@ -7,13 +7,17 @@
 
 #include <string.h>
 #include "sys-ops-commons.h"
+#include <string.h>
+#include <errno.h>
 
 #define MAX_CLIENTS 12
 #define NAME_SIZE 30
 #define TYPE_SIZE 1
 #define MSG_SIZE_SIZE 2
-#define READ_OR_RETURN(sock, buf, size) if(read(sock, buf, size) != size) { fprintf(stderr, "Unable to read type \n"); return; }
-#define WRITE_OR_RETURN(sock, buf, size) if(write(sock, buf, size) != size) { fprintf(stderr, "Unable to read type \n"); return; }
+#define MAX_FILE_SIZE 8196
+
+#define READ_OR_RETURN(sock, buf, size) if(read(sock, buf, size) != size) { fprintf(stderr, "Unable to read message \n Error: %s \n", strerror(errno)); return; }
+#define WRITE_OR_RETURN(sock, buf, size) if(write(sock, buf, size) != size) { fprintf(stderr, "Unable to write message \n"); return; }
 #define WRITE_OR_RETURN_USIZE(sock, buf, size) if(read(sock, buf, size) <= 0) { fprintf(stderr, "Unable to read type \n"); return; }
 typedef enum {
     LOCAL = 1, REMOTE = 2
@@ -33,6 +37,8 @@ typedef struct client {
     char name[NAME_SIZE];
     int fd;
     int busy;
+    int ping_requests;
+    int disconnected;
 } client;
 
 #endif //TEMPLATE_COMMON_H

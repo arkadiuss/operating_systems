@@ -42,7 +42,11 @@ void init_socket(int argc, char ** argv){
             show_error_and_exit("Unable to connect to server", 1);
         }
     }
-    WRITE_OR_RETURN(sock, name, NAME_SIZE)
+    uint8_t type = REGISTER;
+    WRITE_OR_RETURN(sock, &type, TYPE_SIZE)
+    uint16_t size = (uint16_t) strlen(name);
+    WRITE_OR_RETURN(sock, &size, MSG_SIZE_SIZE)
+    WRITE_OR_RETURN(sock, name, size)
     printf("Connected\n");
 }
 
@@ -57,28 +61,27 @@ u_int64_t words(char *text) {
 }
 
 void count_words_and_respond() {
-    printf("COUNTING WORDS");
     uint16_t msg_size;
-    READ_OR_RETURN(sock, &msg_size, SINT16_T)
+    READ_OR_RETURN(sock, &msg_size, MSG_SIZE_SIZE)
     char *text = malloc(sizeof(char)*msg_size);
     READ_OR_RETURN(sock, text, msg_size);
-    printf("TEXT: ", text);
+    printf("TEXT: %s\n", text);
     uint64_t ws = words(text);
     free(text);
-    printf("ENDEDEDEDED: %lld", ws);
+    printf("COUNTED: %lld \n", ws);
     message_type res = RESULT;
-    uint16_t size = sizeof(ws);
+    char buf[MAX_FILE_SIZE];
+    sprintf(buf, "%s: There are %lld words",  name, ws);
+    uint16_t size = (uint16_t) strlen(buf);
+    printf("sending \n", buf);
     WRITE_OR_RETURN(sock, &res, TYPE_SIZE);
     WRITE_OR_RETURN(sock, &size, MSG_SIZE_SIZE);
-    WRITE_OR_RETURN(sock, &ws, sizeof(ws))
+    WRITE_OR_RETURN(sock, buf, size)
 }
 
 void respond_to_ping() {
     uint8_t type = PONG;
     WRITE_OR_RETURN(sock, &type, TYPE_SIZE)
-    uint16_t size = NAME_SIZE;
-    WRITE_OR_RETURN(sock, &size, MSG_SIZE_SIZE)
-    WRITE_OR_RETURN(sock, name, NAME_SIZE)
 }
 
 void unregister(){
@@ -91,7 +94,6 @@ void unregister(){
 
 void handle_requests() {
     while (1) {
-        printf("HANDLING\n");
         uint8_t type;
         READ_OR_RETURN(sock, &type, TYPE_SIZE)
         printf("GOT MESSAGE \n");
@@ -108,7 +110,7 @@ void handle_requests() {
 }
 
 void int_handler(int sig) {
-    unregister();
+    //unregister();
 }
 
 int main(int argc, char ** argv) {
