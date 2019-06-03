@@ -98,7 +98,6 @@ void handle_pong(int fd) {
     int client;
     if((client = get_client_by_fd(fd)) != -1) {
         clients[client].ping_requests--;
-        printf("Reeceived pong from %s\n", clients[client].name);
     }
 }
 
@@ -109,7 +108,6 @@ void disconnect_client(int id) {
 }
 
 void handle_response(int fd) {
-    printf("Handling response on socket %d\n", fd);
     uint8_t type;
     READ_OR_RETURN(fd, &type, TYPE_SIZE)
     switch(type) {
@@ -201,7 +199,7 @@ int choose_client() {
 
 void delegate_request(char *path) {
     char content[MAX_FILE_SIZE];
-    uint16_t file_size = (uint16_t) read_whole_file(path, content);
+    long file_size = read_whole_file(path, content);
     if(file_size < 0) {
         return;
     }
@@ -212,15 +210,15 @@ void delegate_request(char *path) {
     }
     clients[client_id].busy++;
     uint8_t type = COUNT;
+    uint16_t size = (uint16_t) file_size;
     WRITE_OR_RETURN(clients[client_id].fd, &type, TYPE_SIZE)
-    WRITE_OR_RETURN(clients[client_id].fd, &file_size, MSG_SIZE_SIZE)
+    WRITE_OR_RETURN(clients[client_id].fd, &size, MSG_SIZE_SIZE)
     WRITE_OR_RETURN(clients[client_id].fd, content, file_size)
 }
 
 void accept_requests(){
     while(1) {
         char filename[MAX_PATH_LENGTH];
-        printf("server > \n");
         scanf("%s", filename);
         delegate_request(filename);
     }

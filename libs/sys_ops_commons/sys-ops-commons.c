@@ -15,33 +15,33 @@ void validate_argc(int argc, int required) {
     }
 }
 
-size_t get_file_size(const char *file_name) {
+long get_file_size(const char *file_name) {
     int fd;
     if((fd = open(file_name, O_RDONLY)) == -1) {
         fprintf(stderr, "Unable to open file for size \n");
-        return (size_t) -1;
+        return -1;
     }
     struct stat stats;
     fstat(fd, &stats);
-    size_t size = (size_t) stats.st_size;
+    long size = stats.st_size;
     close(fd);
     return size;
 }
 
-size_t read_whole_file(const char *file_name, char *buffer) {
-    size_t size = get_file_size(file_name);
+long read_whole_file(const char *file_name, char *buffer) {
+    long size = get_file_size(file_name);
     if(size == -1) {
         return size;
     }
     FILE *file;
     if((file = fopen(file_name, "r")) == NULL) {
         fprintf(stderr, "Unable to open file \n");
-        return (size_t) -1;
+        return -1;
     }
-    size_t read_size;
-    if((read_size = fread(buffer, sizeof(char), size, file)) != size) {
+    long read_size;
+    if((read_size = fread(buffer, sizeof(char), (size_t) size, file)) != size) {
         fprintf(stderr, "Unable to read file\n");
-        return (size_t) -1;
+        return -1;
     }
     fclose(file);
     return read_size;

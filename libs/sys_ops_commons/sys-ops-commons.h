@@ -3,8 +3,8 @@
 #include <stdio.h>
 
 void validate_argc(int argc, int required);
-size_t get_file_size(const char *file_name);
-size_t read_whole_file(const char *file_name, char *buffer);
+long get_file_size(const char *file_name);
+long read_whole_file(const char *file_name, char *buffer);
 int is_integer(char *str);
 int is_integer_list(char* str);
 int as_integer(char *str);
