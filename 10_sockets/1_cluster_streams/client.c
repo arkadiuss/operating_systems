@@ -50,15 +50,7 @@ void init_socket(int argc, char ** argv){
     printf("Connected\n");
 }
 
-u_int64_t words(char *text) {
-    u_int64_t words = 0;
-    char *w = strtok(text, " ");
-    while (w != NULL) {
-        words++;
-        w = strtok(NULL, " ");
-    }
-    return words;
-}
+
 
 void count_words_and_respond() {
     uint16_t msg_size;
@@ -66,17 +58,20 @@ void count_words_and_respond() {
     char *text = malloc(sizeof(char)*msg_size);
     READ_OR_RETURN(sock, text, msg_size);
     printf("TEXT: %s\n", text);
-    uint64_t ws = words(text);
+    char command[MAX_FILE_SIZE];
+    sprintf(command, "echo \"%s\" | tr -s ' ' '\\n' | sort | uniq -c", text);
+    FILE *fres = popen(command, "r");
+    char result[MAX_FILE_SIZE];
+    if(fread(result, sizeof(char), MAX_FILE_SIZE, fres) <= 0) {
+        fprintf(stderr, "Unable to read response\n");
+        return;
+    }
     free(text);
-    printf("COUNTED: %lld \n", ws);
-    message_type res = RESULT;
-    char buf[MAX_FILE_SIZE];
-    sprintf(buf, "%s: There are %lld words",  name, ws);
-    uint16_t size = (uint16_t) strlen(buf);
-    printf("sending \n", buf);
-    WRITE_OR_RETURN(sock, &res, TYPE_SIZE);
+    message_type type = RESULT;
+    uint16_t size = (uint16_t) strlen(result);
+    WRITE_OR_RETURN(sock, &type, TYPE_SIZE);
     WRITE_OR_RETURN(sock, &size, MSG_SIZE_SIZE);
-    WRITE_OR_RETURN(sock, buf, size)
+    WRITE_OR_RETURN(sock, result, size)
 }
 
 void respond_to_ping() {

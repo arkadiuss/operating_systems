@@ -17,6 +17,11 @@ int local_socket, remote_socket;
 int poll_sock;
 client clients[MAX_CLIENTS];
 int ccount = 0;
+pthread_t connections_thread, ping_thread;
+
+pthread_mutex_t client_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define SAFE_CLIENTS(block) pthread_mutex_lock(&client_mutex); block; pthread_mutex_unlock(&client_mutex);
+
 
 void init_local_socket() {
     if((local_socket = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
@@ -65,7 +70,7 @@ void accept_new_client(int fd) {
 
 int get_client_by_fd(int fd) {
     for(int i = 0; i<ccount; i++) {
-        if(clients[i].fd == fd) return i;
+        if(!clients[i].disconnected && clients[i].fd == fd) return i;
     }
     return -1;
 }
@@ -79,6 +84,9 @@ void handle_register_message(int fd) {
     int id = ccount++;
     clients[id].fd = fd;
     strcpy(clients[id].name, name);
+    clients[id].ping_requests = 0;
+    clients[id].busy = 0;
+    clients[id].disconnected = 0;
     printf("Client %s with socket %d connected\n", name, fd);
 }
 
@@ -110,6 +118,7 @@ void disconnect_client(int id) {
 void handle_response(int fd) {
     uint8_t type;
     READ_OR_RETURN(fd, &type, TYPE_SIZE)
+    SAFE_CLIENTS(
     switch(type) {
         case REGISTER:
             handle_register_message(fd);
@@ -125,7 +134,7 @@ void handle_response(int fd) {
             if (id != -1) disconnect_client(id);
             break;
         }
-    }
+    })
 }
 
 void* handle_messages(void *data){
@@ -150,8 +159,9 @@ void* handle_messages(void *data){
         for(int i = 0; i < size; i++) {
             if(events[i].events & EPOLLRDHUP) {
                 printf("Connection closed by the remote peer\n");
+                SAFE_CLIENTS(
                 int id = get_client_by_fd(events[i].data.fd);
-                if(id != -1) disconnect_client(id);
+                if(id != -1) disconnect_client(id);)
             } else if(events[i].data.fd == remote_socket || events[i].data.fd == local_socket)
                 accept_new_client(events[i].data.fd);
             else
@@ -169,6 +179,7 @@ void send_ping(int id) {
 
 void* ping_clients(void* data) {
     while(1) {
+        SAFE_CLIENTS(
         for (int i = 0; i < ccount; i++) {
             if (!clients[i].disconnected) {
                 if (clients[i].ping_requests > 0) {
@@ -177,7 +188,7 @@ void* ping_clients(void* data) {
                     send_ping(i);
                 }
             }
-        }
+        })
         sleep(5);
     }
 }
@@ -186,11 +197,13 @@ int choose_client() {
     int min_busy = 100;
     int min_busy_i = -1;
     for(int i = 0; i<ccount; i++) {
-        if(clients[i].busy == 0) return i;
-        else {
-            if(clients[i].busy < min_busy) {
-                min_busy = clients[i].busy;
-                min_busy_i = i;
+        if(!clients[i].disconnected) {
+            if (clients[i].busy == 0) return i;
+            else {
+                if (clients[i].busy < min_busy) {
+                    min_busy = clients[i].busy;
+                    min_busy_i = i;
+                }
             }
         }
     }
@@ -220,8 +233,25 @@ void accept_requests(){
     while(1) {
         char filename[MAX_PATH_LENGTH];
         scanf("%s", filename);
-        delegate_request(filename);
+        SAFE_CLIENTS(delegate_request(filename));
     }
+}
+
+void int_handler(int sig) {
+    pthread_cancel(connections_thread);
+    pthread_cancel(ping_thread);
+    close(poll_sock);
+    SAFE_CLIENTS(
+            for(int i =0; i< ccount; i++) {
+                if(!clients[i].disconnected) {
+                    disconnect_client(i);
+                }
+            }
+            )
+    close(remote_socket);
+    close(local_socket);
+    unlink(socket_path);
+    exit(0);
 }
 
 int main(int argc, char **argv) {
@@ -231,9 +261,15 @@ int main(int argc, char **argv) {
     init_remote_socket();
     init_local_socket();
 
-    pthread_t connections_thread, ping_thread;
     pthread_create(&connections_thread, NULL, handle_messages, NULL);
     pthread_create(&ping_thread, NULL, ping_clients, NULL);
+
+
+    struct sigaction act;
+    sigemptyset(&act.sa_mask);
+    act.sa_handler = int_handler;
+    act.sa_flags = 0;
+    sigaction(SIGINT, &act, NULL);
 
     accept_requests();
     return 0;

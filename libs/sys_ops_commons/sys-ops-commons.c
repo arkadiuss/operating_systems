@@ -40,7 +40,7 @@ long read_whole_file(const char *file_name, char *buffer) {
     }
     long read_size;
     if((read_size = fread(buffer, sizeof(char), (size_t) size, file)) != size) {
-        fprintf(stderr, "Unable to read file\n");
+        fprintf(stderr, "Unable to read file exp: %d, act: %d\n", size, read_size);
         return -1;
     }
     fclose(file);
