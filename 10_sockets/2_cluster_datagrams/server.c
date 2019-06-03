@@ -33,6 +33,7 @@ void init_local_socket() {
         show_error_and_exit("Unable to create socket", 1);
     }
     struct sockaddr_un address;
+    memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;
     strcpy(address.sun_path, socket_path);
     if(bind(local_socket, &address, sizeof(struct sockaddr_un)) < 0) {
@@ -44,7 +45,7 @@ void init_remote_socket(){
         show_error_and_exit("Unable to create socket", 1);
     }
     struct sockaddr_in address;
-    memset(&address, 0, sizeof(address));
+    memset(&address, 0, sizeof(struct sockaddr_in));
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = htonl(INADDR_ANY);
     address.sin_port = htons(port);
@@ -102,9 +103,15 @@ void disconnect_client(int id) {
 
 void handle_response(int socket) {
     message msg;
+    memset(&msg, 0 , sizeof(message));
     struct sockaddr addr;
-    READ_OR_RETURN(socket, &addr, &msg)
+//    READ_OR_RETURN(socket, &addr, &msg)
+    socklen_t siz = sizeof(struct sockaddr_un);
+    if(recvfrom(socket, &msg, sizeof(message), 0, (struct sockaddr *) &addr, &siz) != sizeof(message)) {
+        fprintf(stderr, "Unable to read message\n Error: %s \n", strerror(errno)); return;
+    }
     int clientid = get_client_by_addr(&addr);
+    //printf("Got message %d %d %s %d %d\n ", msg.type, msg.msg_len, msg.msg, REGISTER, clientid);
     if(clientid == -1 && msg.type != REGISTER) return;
     SAFE_CLIENTS(
     switch(msg.type) {

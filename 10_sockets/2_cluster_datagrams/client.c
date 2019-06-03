@@ -16,8 +16,8 @@ int sock;
 struct sockaddr *serv_addr;
 long addr_size;
 
-#define READ_OR_RETURN(sock, from, buf) if(recvfrom(sock, buf, sizeof(message), 0, (struct sockaddr *) from, addr_size) != sizeof(message)) { fprintf(stderr, "Unable to read message\n Error: %s \n", strerror(errno)); return; }
-#define SEND_OR_RETURN(sock, to, buf) if(sendto(sock, buf, sizeof(message), 0, to, addr_size) != sizeof(message)) { fprintf(stderr, "Unable to write message \n"); return; }
+#define READ_OR_RETURN(sock, from, buf) if(recvfrom(sock, buf, sizeof(message), 0, (struct sockaddr *) from, &addr_size) != sizeof(message)) { fprintf(stderr, "Unable to read message\n Error: %s \n", strerror(errno)); return; }
+#define SEND_OR_RETURN(sock, to, buf) if(sendto(sock, buf, sizeof(message), 0, to, sizeof(struct sockaddr_un)) != sizeof(message)) { fprintf(stderr, "Unable to write message \n"); return; }
 
 
 void init_socket(int argc, char ** argv){
@@ -27,6 +27,7 @@ void init_socket(int argc, char ** argv){
             show_error_and_exit("Unable to create socket", 1);
         }
         struct sockaddr_un client_address;
+        memset(&client_address, 0, sizeof(client_address));
         client_address.sun_family = AF_UNIX;
         sprintf(client_address.sun_path, "%s_%s", path, name);
 
@@ -35,11 +36,11 @@ void init_socket(int argc, char ** argv){
         }
 
         serv_addr = malloc(sizeof(struct sockaddr_un));
+        memset(serv_addr, 0, sizeof(struct sockaddr_un));
         addr_size = sizeof(struct sockaddr_un);
         struct sockaddr_un *address = (struct sockaddr_un *) serv_addr;
         address->sun_family = AF_UNIX;
         strcpy(address->sun_path, path);
-
         if(connect(sock, address, sizeof(struct sockaddr_un)) < 0) {
             show_error_and_exit("Unable to connect to server", 1);
         }
@@ -63,9 +64,11 @@ void init_socket(int argc, char ** argv){
         }
     }
     message msg;
+    memset(&msg, 0 , sizeof(message));
     msg.type = REGISTER;
     msg.msg_len = strlen(name);
     strcpy(msg.msg, name);
+    printf("Sending %d\n", msg.msg_len);
     SEND_OR_RETURN(sock, serv_addr, &msg)
     printf("Connected\n");
 }

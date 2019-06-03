@@ -15,7 +15,7 @@
 #define NAME_SIZE 30
 #define TYPE_SIZE 1
 #define MSG_SIZE_SIZE 2
-#define MAX_FILE_SIZE 8196
+#define MAX_FILE_SIZE 1024
 
 typedef enum {
     LOCAL = 1, REMOTE = 2
@@ -26,6 +26,7 @@ typedef enum {
 } message_type;
 
 typedef struct message {
+    int tmp, tmp2, tmp3;
     int type, msg_len;
     char msg[MAX_FILE_SIZE];
 } message;
