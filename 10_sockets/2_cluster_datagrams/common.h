@@ -26,7 +26,6 @@ typedef enum {
 } message_type;
 
 typedef struct message {
-    int tmp, tmp2, tmp3;
     int type, msg_len;
     char msg[MAX_FILE_SIZE];
 } message;

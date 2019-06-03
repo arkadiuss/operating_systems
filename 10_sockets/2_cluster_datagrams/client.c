@@ -17,7 +17,7 @@ struct sockaddr *serv_addr;
 long addr_size;
 
 #define READ_OR_RETURN(sock, from, buf) if(recvfrom(sock, buf, sizeof(message), 0, (struct sockaddr *) from, &addr_size) != sizeof(message)) { fprintf(stderr, "Unable to read message\n Error: %s \n", strerror(errno)); return; }
-#define SEND_OR_RETURN(sock, to, buf) if(sendto(sock, buf, sizeof(message), 0, to, sizeof(struct sockaddr_un)) != sizeof(message)) { fprintf(stderr, "Unable to write message \n"); return; }
+#define SEND_OR_RETURN(sock, to, buf) if(write(sock, buf, sizeof(message)) != sizeof(message)) { fprintf(stderr, "Unable to write message \n"); return; }
 
 
 void init_socket(int argc, char ** argv){

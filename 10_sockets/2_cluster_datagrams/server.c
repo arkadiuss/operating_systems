@@ -16,8 +16,8 @@ char socket_path[MAX_PATH_LENGTH];
 int local_socket, remote_socket;
 int poll_sock;
 
-#define READ_OR_RETURN(sock, from, buf) unsigned int siz = (sock == local_socket ? sizeof(struct sockaddr_un) : sizeof(struct sockaddr_in)); if(recvfrom(sock, buf, sizeof(message), 0, (struct sockaddr *) from, &siz) != sizeof(message)) { fprintf(stderr, "Unable to read message\n Error: %s \n", strerror(errno)); return; }
-#define SEND_OR_RETURN(sock, to, buf) unsigned int siz = (sock == local_socket ? sizeof(struct sockaddr_un) : sizeof(struct sockaddr_in)); if(sendto(sock, buf, sizeof(message), 0, to, siz) != sizeof(message)) { fprintf(stderr, "Unable to write message \n Error: %s \n", strerror(errno)); return; }
+#define READ_OR_RETURN(sock, from, buf) unsigned int siz = ((sock == local_socket) ? sizeof(struct sockaddr_un) : sizeof(struct sockaddr_in)); if(recvfrom(sock, buf, sizeof(message), 0, (struct sockaddr *) from, &siz) != sizeof(message)) { fprintf(stderr, "Unable to read message\n Error: %s \n", strerror(errno)); return; }
+#define SEND_OR_RETURN(sock, to, buf) unsigned int siz = ((sock == local_socket) ? sizeof(struct sockaddr_un) : sizeof(struct sockaddr_in)); if(sendto(sock, buf, sizeof(message), 0, to, siz) != sizeof(message)) { fprintf(stderr, "Unable to write message \n Error: %s \n", strerror(errno)); return; }
 
 
 client clients[MAX_CLIENTS];
@@ -104,19 +104,14 @@ void disconnect_client(int id) {
 void handle_response(int socket) {
     message msg;
     memset(&msg, 0 , sizeof(message));
-    struct sockaddr addr;
-//    READ_OR_RETURN(socket, &addr, &msg)
-    socklen_t siz = sizeof(struct sockaddr_un);
-    if(recvfrom(socket, &msg, sizeof(message), 0, (struct sockaddr *) &addr, &siz) != sizeof(message)) {
-        fprintf(stderr, "Unable to read message\n Error: %s \n", strerror(errno)); return;
-    }
-    int clientid = get_client_by_addr(&addr);
-    //printf("Got message %d %d %s %d %d\n ", msg.type, msg.msg_len, msg.msg, REGISTER, clientid);
+    struct sockaddr* addr = malloc((socket == local_socket) ? sizeof(struct sockaddr_un) : sizeof(struct sockaddr_in));
+    READ_OR_RETURN(socket, addr, &msg)
+    int clientid = get_client_by_addr(addr);
     if(clientid == -1 && msg.type != REGISTER) return;
     SAFE_CLIENTS(
     switch(msg.type) {
         case REGISTER:
-            handle_register_message(&msg, &addr, socket);
+            handle_register_message(&msg, addr, socket);
             break;
         case RESULT:
             handle_result(&msg, clientid);
