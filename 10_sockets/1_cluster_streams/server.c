@@ -103,12 +103,14 @@ void handle_pong(int fd) {
 }
 
 void disconnect_client(int id) {
+    printf("IDEDEKKE %d\n", id);
     clients[id].disconnected = 1;
-    //close(clients[id].fd);
-    printf("Client %s disconnected", clients[id].name);
+    close(clients[id].fd);
+    printf("Client %s disconnected\n", clients[id].name);
 }
 
 void handle_response(int fd) {
+    printf("Handling response on socket %d\n", fd);
     uint8_t type;
     READ_OR_RETURN(fd, &type, TYPE_SIZE)
     switch(type) {
@@ -123,7 +125,7 @@ void handle_response(int fd) {
             break;
         case UNREGISTER: {
             int id = get_client_by_fd(fd);
-            if (id != -1) disconnect_client(fd);
+            if (id != -1) disconnect_client(id);
             break;
         }
     }

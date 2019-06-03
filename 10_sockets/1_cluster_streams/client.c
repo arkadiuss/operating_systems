@@ -87,9 +87,6 @@ void respond_to_ping() {
 void unregister(){
     uint8_t type = UNREGISTER;
     WRITE_OR_RETURN(sock, &type, TYPE_SIZE)
-    uint16_t size = NAME_SIZE;
-    WRITE_OR_RETURN(sock, &size, MSG_SIZE_SIZE)
-    WRITE_OR_RETURN(sock, name, NAME_SIZE)
 }
 
 void handle_requests() {
@@ -110,7 +107,9 @@ void handle_requests() {
 }
 
 void int_handler(int sig) {
-    //unregister();
+    unregister();
+    close(sock);
+    exit(0);
 }
 
 int main(int argc, char ** argv) {
@@ -118,13 +117,14 @@ int main(int argc, char ** argv) {
     strcpy(name, argv[1]);
     type = get_type(argv[2]);
     init_socket(argc, argv);
-    handle_requests();
 
     struct sigaction act;
     sigemptyset(&act.sa_mask);
     act.sa_handler = int_handler;
     act.sa_flags = 0;
     sigaction(SIGINT, &act, NULL);
+
+    handle_requests();
 
     return 0;
 }
