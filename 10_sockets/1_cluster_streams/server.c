@@ -55,7 +55,7 @@ void accept_new_client(int fd) {
         show_error_and_exit("Unable to accept client", 1);
     }
     struct epoll_event event;
-    event.events = EPOLLIN;
+    event.events = EPOLLIN | EPOLLRDHUP;
     event.data.fd = client_socket;
     if(epoll_ctl(poll_sock, EPOLL_CTL_ADD, client_socket, &event) < 0) {
         fprintf(stderr, "Unable to add client to poll\n");
@@ -103,7 +103,6 @@ void handle_pong(int fd) {
 }
 
 void disconnect_client(int id) {
-    printf("IDEDEKKE %d\n", id);
     clients[id].disconnected = 1;
     close(clients[id].fd);
     printf("Client %s disconnected\n", clients[id].name);
@@ -151,7 +150,11 @@ void* handle_messages(void *data){
             show_error_and_exit("Unable to wait for connections", 1);
         }
         for(int i = 0; i < size; i++) {
-            if(events[i].data.fd == remote_socket || events[i].data.fd == local_socket)
+            if(events[i].events & EPOLLRDHUP) {
+                printf("Connection closed by the remote peer\n");
+                int id = get_client_by_fd(events[i].data.fd);
+                if(id != -1) disconnect_client(id);
+            } else if(events[i].data.fd == remote_socket || events[i].data.fd == local_socket)
                 accept_new_client(events[i].data.fd);
             else
                 handle_response(events[i].data.fd);
@@ -199,6 +202,9 @@ int choose_client() {
 void delegate_request(char *path) {
     char content[MAX_FILE_SIZE];
     uint16_t file_size = (uint16_t) read_whole_file(path, content);
+    if(file_size < 0) {
+        return;
+    }
     int client_id;
     if((client_id = choose_client()) == -1){
         fprintf(stderr, "No client to process request\n");
