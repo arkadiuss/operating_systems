@@ -32,6 +32,7 @@ client_type get_type(const char *str) {
 typedef struct client {
     char name[NAME_SIZE];
     int fd;
+    int busy;
 } client;
 
 #endif //TEMPLATE_COMMON_H

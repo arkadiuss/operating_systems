@@ -57,12 +57,15 @@ u_int64_t words(char *text) {
 }
 
 void count_words_and_respond() {
+    printf("COUNTING WORDS");
     uint16_t msg_size;
     READ_OR_RETURN(sock, &msg_size, SINT16_T)
     char *text = malloc(sizeof(char)*msg_size);
     READ_OR_RETURN(sock, text, msg_size);
+    printf("TEXT: ", text);
     uint64_t ws = words(text);
     free(text);
+    printf("ENDEDEDEDED: %lld", ws);
     message_type res = RESULT;
     uint16_t size = sizeof(ws);
     WRITE_OR_RETURN(sock, &res, TYPE_SIZE);
@@ -88,8 +91,11 @@ void unregister(){
 
 void handle_requests() {
     while (1) {
-        uint16_t type;
-        READ_OR_RETURN(sock, &type, SINT16_T)
+        printf("HANDLING\n");
+        uint8_t type;
+        READ_OR_RETURN(sock, &type, TYPE_SIZE)
+        printf("GOT MESSAGE \n");
+        printf("TYPE %d\n", type);
         switch (type) {
             case COUNT:
                 count_words_and_respond();

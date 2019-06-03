@@ -10,8 +10,10 @@
 #include <sys/epoll.h>
 
 #define MAX_EVENTS 100
+#define MAX_PATH_LENGTH 108
+#define MAX_FILE_SIZE 8196
 int port;
-char socket_path[108];
+char socket_path[MAX_PATH_LENGTH];
 int local_socket, remote_socket;
 client clients[MAX_CLIENTS];
 int ccount = 0;
@@ -86,6 +88,45 @@ void* accept_connections(void* data){
     return NULL;
 }
 
+int choose_client() {
+    int min_busy = 100;
+    int min_busy_i = -1;
+    for(int i = 0; i<ccount; i++) {
+        if(clients[i].busy == 0) return i;
+        else {
+            if(clients[i].busy < min_busy) {
+                min_busy = clients[i].busy;
+                min_busy_i = i;
+            }
+        }
+    }
+    return min_busy_i;
+}
+
+void delegate_request(char *path) {
+    char content[MAX_FILE_SIZE];
+    uint16_t file_size = (uint16_t) read_whole_file(path, content);
+    int client_id;
+    if((client_id = choose_client()) == -1){
+        fprintf(stderr, "No client to process request\n");
+        return;
+    }
+    clients[client_id].busy++;
+    uint8_t type = COUNT;
+    WRITE_OR_RETURN(clients[client_id].fd, &type, TYPE_SIZE)
+    WRITE_OR_RETURN(clients[client_id].fd, &file_size, MSG_SIZE_SIZE)
+    WRITE_OR_RETURN(clients[client_id].fd, content, file_size)
+}
+
+void accept_requests(){
+    while(1) {
+        char filename[MAX_PATH_LENGTH];
+        printf("server > \n");
+        scanf("%s", filename);
+        delegate_request(filename);
+    }
+}
+
 int main(int argc, char **argv) {
     validate_argc(argc, 2);
     port = as_integer(argv[1]);
@@ -95,6 +136,9 @@ int main(int argc, char **argv) {
 
     pthread_t accept_connections_thread;
     pthread_create(&accept_connections_thread, NULL, accept_connections, NULL);
+
+    accept_requests();
+
     pthread_join(accept_connections_thread, NULL);
     return 0;
 }
