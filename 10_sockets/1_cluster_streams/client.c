@@ -23,7 +23,7 @@ void init_socket(int argc, char ** argv){
         struct sockaddr_un address;
         address.sun_family = AF_UNIX;
         strcpy(address.sun_path, path);
-        if(connect(sock, &address, sizeof(address)) < 0) {
+        if(connect(sock, (struct sockaddr*) &address, sizeof(address)) < 0) {
             show_error_and_exit("Unable to connect to server", 1);
         }
     } else if(type == REMOTE) {
@@ -38,7 +38,7 @@ void init_socket(int argc, char ** argv){
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = ip;
         address.sin_port = htons(port);
-        if(connect(sock, &address, sizeof(address)) < 0) {
+        if(connect(sock, (struct sockaddr*) &address, sizeof(address)) < 0) {
             show_error_and_exit("Unable to connect to server", 1);
         }
     }

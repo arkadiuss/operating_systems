@@ -15,14 +15,15 @@ client_type type;
 int sock;
 struct sockaddr *serv_addr;
 long addr_size;
+char * path;
 
-#define READ_OR_RETURN(sock, from, buf) if(recvfrom(sock, buf, sizeof(message), 0, (struct sockaddr *) from, &addr_size) != sizeof(message)) { fprintf(stderr, "Unable to read message\n Error: %s \n", strerror(errno)); return; }
+#define READ_OR_RETURN(sock, from, buf) if(recvfrom(sock, buf, sizeof(message), 0, (struct sockaddr *) from, (socklen_t*) &addr_size) != sizeof(message)) { fprintf(stderr, "Unable to read message\n Error: %s \n", strerror(errno)); return; }
 #define SEND_OR_RETURN(sock, to, buf) if(write(sock, buf, sizeof(message)) != sizeof(message)) { fprintf(stderr, "Unable to write message \n"); return; }
 
 
 void init_socket(int argc, char ** argv){
     if(type == LOCAL) {
-        const char *path = argv[3];
+        path = argv[3];
         if((sock = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0) {
             show_error_and_exit("Unable to create socket", 1);
         }
@@ -31,7 +32,7 @@ void init_socket(int argc, char ** argv){
         client_address.sun_family = AF_UNIX;
         sprintf(client_address.sun_path, "%s_%s", path, name);
 
-        if(bind(sock, &client_address, sizeof(struct sockaddr_un)) < 0) {
+        if(bind(sock, (struct sockaddr*) &client_address, sizeof(struct sockaddr_un)) < 0) {
             show_error_and_exit("Unable to bind to local socket", 1);
         }
 
@@ -41,7 +42,7 @@ void init_socket(int argc, char ** argv){
         struct sockaddr_un *address = (struct sockaddr_un *) serv_addr;
         address->sun_family = AF_UNIX;
         strcpy(address->sun_path, path);
-        if(connect(sock, address, sizeof(struct sockaddr_un)) < 0) {
+        if(connect(sock, (struct sockaddr*) address, sizeof(struct sockaddr_un)) < 0) {
             show_error_and_exit("Unable to connect to server", 1);
         }
     } else if(type == REMOTE) {
@@ -59,14 +60,14 @@ void init_socket(int argc, char ** argv){
         address->sin_family = AF_INET;
         address->sin_addr.s_addr = ip;
         address->sin_port = htons(port);
-        if(connect(sock, address, sizeof(struct sockaddr_in)) < 0) {
+        if(connect(sock, (struct sockaddr*) address, sizeof(struct sockaddr_in)) < 0) {
             show_error_and_exit("Unable to connect to server", 1);
         }
     }
     message msg;
     memset(&msg, 0 , sizeof(message));
     msg.type = REGISTER;
-    msg.msg_len = strlen(name);
+    msg.msg_len = (int) strlen(name);
     strcpy(msg.msg, name);
     printf("Sending %d\n", msg.msg_len);
     SEND_OR_RETURN(sock, serv_addr, &msg)
@@ -123,6 +124,9 @@ void handle_requests() {
 void int_handler(int sig) {
     unregister();
     close(sock);
+    char socket_name[108];
+    sprintf(socket_name, "%s_%s", path, name);
+    unlink(socket_name);
     exit(0);
 }
 

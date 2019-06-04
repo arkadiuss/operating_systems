@@ -30,7 +30,7 @@ void init_local_socket() {
     struct sockaddr_un address;
     address.sun_family = AF_UNIX;
     strcpy(address.sun_path, socket_path);
-    if(bind(local_socket, &address, sizeof(address)) < 0) {
+    if(bind(local_socket, (struct sockaddr*) &address, sizeof(address)) < 0) {
         show_error_and_exit("Unable to bind to local socket", 1);
     }
     if(listen(local_socket, MAX_CLIENTS) < 0) {
@@ -46,7 +46,7 @@ void init_remote_socket(){
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = htonl(INADDR_ANY);
     address.sin_port = htons(port);
-    if(bind(remote_socket, &address, sizeof(address)) < 0) {
+    if(bind(remote_socket, (struct sockaddr*) &address, sizeof(address)) < 0) {
         show_error_and_exit("Unable to bind to remote socket", 1);
     }
     if(listen(remote_socket, 12) < 0) {
